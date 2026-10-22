@@ -2,27 +2,23 @@ package br.com.footballmarket;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+/**
+ * Sobe a aplicação inteira contra um PostgreSQL real. É ignorado quando o Docker não está disponível.
+ */
 @SpringBootTest
-@Import(FootballMarketApplicationTests.PostgresContainerConfig.class)
+@Testcontainers(disabledWithoutDocker = true)
 class FootballMarketApplicationTests {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
 
     @Test
     void contextLoads() {
-    }
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class PostgresContainerConfig {
-
-        @Bean
-        @ServiceConnection
-        PostgreSQLContainer<?> postgresContainer() {
-            return new PostgreSQLContainer<>("postgres:17-alpine");
-        }
     }
 }
