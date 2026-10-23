@@ -71,6 +71,13 @@ public class ClubService {
         return new ClubDetail(ValuedClub.of(club, players.squad(club.getId())), contracts.activeByPlayer(club.getId()));
     }
 
+    @Transactional(readOnly = true)
+    public void requireExists(Integer id) {
+        if (!repository.existsById(id)) {
+            throw notFound();
+        }
+    }
+
     /**
      * Clube com trava da linha até o fim da transação, para compras e vendas.
      */

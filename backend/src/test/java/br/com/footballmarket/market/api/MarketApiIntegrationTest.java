@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -249,6 +252,57 @@ class MarketApiIntegrationTest extends PostgresIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM transacoes WHERE tipo = 'VENDA'", Integer.class))
                 .isEqualTo(1);
         assertCashMatchesTransactions(club);
+    }
+
+    @Test
+    void historyFiltersInTheDatabaseAndExportsTheSameRows() throws Exception {
+        int aguias = createClub("Águias FC", "AGU");
+        int bravos = createClub("Bravos FC", "BFC");
+        int meiaLua = registerMeiaLua("Meia Lua");
+        int zeca = registerMeiaLua("Zé Foguete");
+        int deleted = registerMeiaLua("Davi Excluído");
+        assertThat(buyStatus(meiaLua, aguias)).isEqualTo(200);
+        assertThat(buyStatus(zeca, aguias)).isEqualTo(200);
+        assertThat(sellStatus(meiaLua)).isEqualTo(200);
+        assertThat(buyStatus(meiaLua, bravos)).isEqualTo(200); // não entra no histórico do Águias
+        mvc.perform(post("/api/v1/players/" + deleted + "/sell")); // livre: 409, nada gravado
+        mvc.perform(delete("/api/v1/players/" + deleted))
+                .andExpect(status().isNoContent());
+
+        // mais recente primeiro: VENDA do Meia Lua, COMPRA do Zé, COMPRA do Meia Lua
+        mvc.perform(get("/api/v1/clubs/" + aguias + "/transactions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].type").value(contains("VENDA", "COMPRA", "COMPRA")))
+                .andExpect(jsonPath("$.data[*].player_id").value(contains(meiaLua, zeca, meiaLua)))
+                .andExpect(jsonPath("$.summary.total_spent").value(84.00))     // 2 × (40,00 + 2,00)
+                .andExpect(jsonPath("$.summary.total_received").value(36.00))
+                .andExpect(jsonPath("$.summary.total_fees").value(4.00))
+                .andExpect(jsonPath("$.summary.total_penalties").value(4.00))
+                .andExpect(jsonPath("$.summary.total_profit").value(0.00));
+        // RN17: 300,00 + soma de cash_change = caixa atual
+        mvc.perform(get("/api/v1/clubs/" + aguias)).andExpect(jsonPath("$.cash").value(252.00));
+
+        mvc.perform(get("/api/v1/clubs/" + aguias + "/transactions").param("type", "COMPRA"))
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.summary.total_received").value(0.00));
+        mvc.perform(get("/api/v1/clubs/" + aguias + "/transactions").param("type", "VENDA,COMPRA").param("player_id", String.valueOf(zeca)))
+                .andExpect(jsonPath("$.data[*].player_id").value(contains(zeca)))
+                .andExpect(jsonPath("$.summary.total_spent").value(42.00));
+        mvc.perform(get("/api/v1/clubs/" + bravos + "/transactions").param("player_id", String.valueOf(zeca)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+        mvc.perform(get("/api/v1/clubs/" + aguias + "/transactions").param("player_id", String.valueOf(deleted)))
+                .andExpect(status().isNotFound());
+
+        String csv = new String(mvc.perform(get("/api/v1/clubs/" + aguias + "/transactions/export").param("type", "COMPRA"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray(), StandardCharsets.UTF_8);
+        String[] lines = csv.split("\n", -1);
+        assertThat(lines).hasSize(4); // cabeçalho, 2 compras e o vazio depois do último LF
+        assertThat(lines[0]).isEqualTo("data_hora;tipo;jogador;valor;taxa_ou_comissao;multa;lucro;variacao_caixa");
+        assertThat(lines[1]).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}-03:00;COMPRA;Zé Foguete;40,00;2,00;0,00;;-42,00");
+        assertThat(lines[2]).endsWith(";COMPRA;Meia Lua;40,00;2,00;0,00;;-42,00");
+        assertThat(lines[3]).isEmpty();
     }
 
     private static List<Integer> runTogether(List<Callable<Integer>> tasks) throws Exception {
