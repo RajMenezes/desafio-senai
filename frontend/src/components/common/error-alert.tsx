@@ -5,14 +5,16 @@ import { getErrorMessage } from '@/lib/api/errors'
 interface ErrorAlertProps {
   title: string
   error: unknown
+  /** Texto no lugar da mensagem do erro (ex.: orientação específica para falha de rede). */
+  message?: string
 }
 
-export function ErrorAlert({ title, error }: ErrorAlertProps) {
+export function ErrorAlert({ title, error, message }: ErrorAlertProps) {
   return (
     <Alert variant="destructive">
       <CircleAlert aria-hidden />
       <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>{getErrorMessage(error)}</AlertDescription>
+      <AlertDescription>{message ?? getErrorMessage(error)}</AlertDescription>
     </Alert>
   )
 }

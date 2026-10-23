@@ -1,4 +1,4 @@
-import { BarChart3, Coins, HeartPulse, Pencil, Tag, TrendingUp } from 'lucide-react'
+import { BarChart3, Coins, HeartPulse, Pencil, ShoppingCart, Tag, TrendingUp } from 'lucide-react'
 import { ErrorState } from '@/components/common/error-state'
 import { LoadingState } from '@/components/common/loading-state'
 import { StatCard } from '@/components/common/stat-card'
@@ -177,6 +177,12 @@ export function PlayerDetailsSheet({
               <HeartPulse data-icon="inline-start" aria-hidden />
               Alterar condição
             </Button>
+            {player.club_id === null && (
+              <Button className="ml-auto" onClick={() => onAction('buy', player)}>
+                <ShoppingCart data-icon="inline-start" aria-hidden />
+                Comprar
+              </Button>
+            )}
           </SheetFooter>
         )}
       </SheetContent>

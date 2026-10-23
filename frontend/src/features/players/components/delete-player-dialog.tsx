@@ -37,7 +37,7 @@ export function DeletePlayerDialog({ player, onClose }: DeletePlayerDialogProps)
       errorTitle="Não foi possível excluir o jogador"
       destructive
     >
-      <PlayerSummary player={player} status="club" />
+      <PlayerSummary player={player} detail="club" />
     </ConfirmDialog>
   )
 }

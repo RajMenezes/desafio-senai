@@ -1,7 +1,9 @@
+import { ShoppingCart } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/paths'
 import { TableSkeleton } from '@/components/common/table-skeleton'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -111,7 +113,20 @@ export function PlayersTable({
                 <ClubCell clubId={player.club_id} clubsById={clubsById} />
               </TableCell>
               <TableCell className="px-3 text-right">
-                <PlayerActionsMenu player={player} onAction={onAction} />
+                <div className="flex items-center justify-end gap-1">
+                  {player.club_id === null && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Comprar ${player.name}`}
+                      onClick={() => onAction('buy', player)}
+                    >
+                      <ShoppingCart data-icon="inline-start" aria-hidden />
+                      Comprar
+                    </Button>
+                  )}
+                  <PlayerActionsMenu player={player} onAction={onAction} />
+                </div>
               </TableCell>
             </TableRow>
           ))}

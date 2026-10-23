@@ -1,4 +1,4 @@
-import { Eye, HeartPulse, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Eye, HeartPulse, MoreHorizontal, Pencil, ShoppingCart, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { Player } from '../types'
 
-export type PlayerAction = 'details' | 'edit' | 'condition' | 'delete'
+export type PlayerAction = 'details' | 'edit' | 'condition' | 'buy' | 'delete'
 
 interface PlayerActionsMenuProps {
   player: Player
@@ -41,6 +41,15 @@ export function PlayerActionsMenu({ player, onAction }: PlayerActionsMenuProps) 
           <HeartPulse aria-hidden />
           Alterar condição
         </DropdownMenuItem>
+        {isFree && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => onAction('buy', player)}>
+              <ShoppingCart aria-hidden />
+              Comprar
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

@@ -1,5 +1,5 @@
-import { Check } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { HandCoins } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -17,6 +17,7 @@ import { formatDateTimeParts } from '@/lib/date-time'
 import { formatInteger, formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { SquadPlayer } from '../types'
+import { PenaltyBadge } from './penalty-badge'
 
 const COLUMNS = [
   { label: 'Jogador' },
@@ -28,20 +29,8 @@ const COLUMNS = [
   { label: 'Fim da fidelidade' },
   { label: 'Dias restantes', numeric: true },
   { label: '% de multa' },
+  { label: 'Ações', hidden: true },
 ]
-
-/** Percentual de multa da RN15 vindo da API: sem multa em verde, a maior em vermelho. */
-function PenaltyBadge({ rate }: { rate: number }) {
-  if (rate === 0) {
-    return (
-      <Badge variant="success">
-        <Check aria-hidden />
-        0%
-      </Badge>
-    )
-  }
-  return <Badge variant={rate >= 20 ? 'danger' : 'warning'}>{rate}%</Badge>
-}
 
 function LoyaltyUntil({ value }: { value: string }) {
   const { date, time } = formatDateTimeParts(value)
@@ -53,7 +42,12 @@ function LoyaltyUntil({ value }: { value: string }) {
   )
 }
 
-export function SquadTable({ players }: { players: SquadPlayer[] }) {
+interface SquadTableProps {
+  players: SquadPlayer[]
+  onSell: (player: SquadPlayer) => void
+}
+
+export function SquadTable({ players, onSell }: SquadTableProps) {
   return (
     <Table>
       <TableHeader className="bg-muted-subtle">
@@ -63,7 +57,7 @@ export function SquadTable({ players }: { players: SquadPlayer[] }) {
               key={column.label}
               className={cn('px-2 whitespace-normal', column.numeric && 'text-right')}
             >
-              {column.label}
+              {column.hidden ? <span className="sr-only">{column.label}</span> : column.label}
             </TableHead>
           ))}
         </TableRow>
@@ -100,6 +94,17 @@ export function SquadTable({ players }: { players: SquadPlayer[] }) {
             </TableCell>
             <TableCell className="px-2">
               <PenaltyBadge rate={player.contract.penalty_rate} />
+            </TableCell>
+            <TableCell className="px-2 text-right">
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label={`Vender ${player.name}`}
+                onClick={() => onSell(player)}
+              >
+                <HandCoins data-icon="inline-start" aria-hidden />
+                Vender
+              </Button>
             </TableCell>
           </TableRow>
         ))}

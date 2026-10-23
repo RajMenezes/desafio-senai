@@ -1,4 +1,5 @@
 import { CircleCheck, Eye } from 'lucide-react'
+import { ResultRows } from '@/components/common/result-rows'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatMoney } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import { POSITION_LABELS, type Player } from '../types'
 
 interface PlayerCreatedDialogProps {
@@ -51,32 +51,7 @@ export function PlayerCreatedDialog({ player, onClose, onShowDetails }: PlayerCr
             {player.name} entrou livre e Apto. Valores em moedas, calculados pela API ao salvar.
           </DialogDescription>
         </DialogHeader>
-        <dl className="divide-y rounded-lg border">
-          {rows.map((row) => (
-            <div
-              key={row.label}
-              className={cn(
-                'flex items-center justify-between gap-4 px-4 py-3',
-                row.highlight && 'bg-muted-subtle',
-              )}
-            >
-              <div>
-                <dt className={row.highlight ? 'font-semibold' : 'text-muted-foreground'}>
-                  {row.label}
-                </dt>
-                <p className="text-xs text-muted-foreground">{row.hint}</p>
-              </div>
-              <dd
-                className={cn(
-                  'tabular-nums',
-                  row.highlight ? 'text-lg font-semibold' : 'font-medium',
-                )}
-              >
-                {row.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <ResultRows rows={rows} />
         <DialogFooter>
           <Button variant="outline" onClick={onShowDetails}>
             <Eye data-icon="inline-start" aria-hidden />

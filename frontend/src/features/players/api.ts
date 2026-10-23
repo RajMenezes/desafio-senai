@@ -32,7 +32,7 @@ export function usePlayer(id: number) {
 }
 
 /** Depois de mudar um jogador, recarrega as listas e os clubes (valor do elenco e patrimônio). */
-function useInvalidatePlayers() {
+export function useInvalidatePlayersAndClubs() {
   const queryClient = useQueryClient()
   return () =>
     Promise.all([
@@ -42,7 +42,7 @@ function useInvalidatePlayers() {
 }
 
 export function useCreatePlayer() {
-  const invalidatePlayers = useInvalidatePlayers()
+  const invalidatePlayers = useInvalidatePlayersAndClubs()
   return useMutation({
     mutationFn: (player: CreatePlayerRequest) =>
       request<Player>('/players', { method: 'POST', body: player }),
@@ -51,7 +51,7 @@ export function useCreatePlayer() {
 }
 
 export function useUpdatePlayer(id: number) {
-  const invalidatePlayers = useInvalidatePlayers()
+  const invalidatePlayers = useInvalidatePlayersAndClubs()
   return useMutation({
     mutationFn: (player: UpdatePlayerRequest) =>
       request<Player>(`/players/${id}`, { method: 'PUT', body: player }),
@@ -60,7 +60,7 @@ export function useUpdatePlayer(id: number) {
 }
 
 export function useChangeCondition(id: number) {
-  const invalidatePlayers = useInvalidatePlayers()
+  const invalidatePlayers = useInvalidatePlayersAndClubs()
   return useMutation({
     mutationFn: (condition: Condition) =>
       request<Player>(`/players/${id}/condition`, { method: 'PATCH', body: { condition } }),
@@ -69,7 +69,7 @@ export function useChangeCondition(id: number) {
 }
 
 export function useDeletePlayer(id: number) {
-  const invalidatePlayers = useInvalidatePlayers()
+  const invalidatePlayers = useInvalidatePlayersAndClubs()
   return useMutation({
     mutationFn: () => request<void>(`/players/${id}`, { method: 'DELETE' }),
     onSuccess: invalidatePlayers,

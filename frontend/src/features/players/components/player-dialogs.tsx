@@ -1,4 +1,7 @@
 import type { Club } from '@/features/clubs/types'
+import { BuyDialog } from '@/features/market/components/buy-dialog'
+import { PurchaseResultDialog } from '@/features/market/components/purchase-result-dialog'
+import type { PurchaseResult } from '@/features/market/types'
 import type { Player } from '../types'
 import { ConditionDialog } from './condition-dialog'
 import { DeletePlayerDialog } from './delete-player-dialog'
@@ -10,7 +13,10 @@ import { PlayerEditDialog } from './player-edit-dialog'
 
 /** Diálogo aberto na tela de jogadores (no máximo um por vez). */
 export type PlayerDialogState =
-  { kind: 'create' } | { kind: 'created'; player: Player } | { kind: PlayerAction; player: Player }
+  | { kind: 'create' }
+  | { kind: 'created'; player: Player }
+  | { kind: 'purchased'; result: PurchaseResult; club: Club | undefined }
+  | { kind: PlayerAction; player: Player }
 
 interface PlayerDialogsProps {
   state: PlayerDialogState | null
@@ -47,6 +53,16 @@ export function PlayerDialogs({ state, clubsById, onChange }: PlayerDialogsProps
       {state?.kind === 'edit' && <PlayerEditDialog player={state.player} onClose={close} />}
       {state?.kind === 'condition' && <ConditionDialog player={state.player} onClose={close} />}
       {state?.kind === 'delete' && <DeletePlayerDialog player={state.player} onClose={close} />}
+      {state?.kind === 'buy' && (
+        <BuyDialog
+          player={state.player}
+          onClose={close}
+          onPurchased={(result, club) => onChange({ kind: 'purchased', result, club })}
+        />
+      )}
+      {state?.kind === 'purchased' && (
+        <PurchaseResultDialog result={state.result} club={state.club} onClose={close} />
+      )}
     </>
   )
 }

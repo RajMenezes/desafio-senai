@@ -8,6 +8,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { usePageTitle } from '@/app/page-title'
 import { paths } from '@/app/paths'
@@ -18,12 +19,15 @@ import { StatCard } from '@/components/common/stat-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SaleResultDialog } from '@/features/market/components/sale-result-dialog'
+import { SellDialog } from '@/features/market/components/sell-dialog'
+import type { SaleResult } from '@/features/market/types'
 import { ApiError, getErrorMessage } from '@/lib/api/errors'
 import { formatMoney } from '@/lib/format'
 import { useClub } from './api'
 import { ClubTile } from './components/club-tile'
 import { SquadTable } from './components/squad-table'
-import { SQUAD_LIMIT, type ClubDetail } from './types'
+import { SQUAD_LIMIT, type ClubDetail, type SquadPlayer } from './types'
 
 /** Id da URL aceito pela API: inteiro positivo, só dígitos, sem zeros à esquerda (V8). */
 function parseClubId(value: string | undefined): number | undefined {
@@ -114,7 +118,13 @@ function ClubStats({ club }: { club: ClubDetail }) {
   )
 }
 
-function SquadSection({ club }: { club: ClubDetail }) {
+function SquadSection({
+  club,
+  onSell,
+}: {
+  club: ClubDetail
+  onSell: (player: SquadPlayer) => void
+}) {
   if (club.players.length === 0) {
     return (
       <section className="rounded-xl border bg-card">
@@ -145,7 +155,7 @@ function SquadSection({ club }: { club: ClubDetail }) {
           venda agora.
         </p>
       </div>
-      <SquadTable players={club.players} />
+      <SquadTable players={club.players} onSell={onSell} />
     </section>
   )
 }
@@ -154,6 +164,9 @@ export function ClubPage() {
   const { clubId } = useParams()
   const id = parseClubId(clubId)
   const query = useClub(id ?? 0, id !== undefined)
+  const [sale, setSale] = useState<
+    { kind: 'confirm'; player: SquadPlayer } | { kind: 'done'; result: SaleResult } | null
+  >(null)
   const notFound =
     id === undefined || (query.error instanceof ApiError && query.error.status === 404)
 
@@ -186,9 +199,20 @@ export function ClubPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="squad">
-          <SquadSection club={club} />
+          <SquadSection club={club} onSell={(player) => setSale({ kind: 'confirm', player })} />
         </TabsContent>
       </Tabs>
+      {sale?.kind === 'confirm' && (
+        <SellDialog
+          player={sale.player}
+          clubName={club.name}
+          onClose={() => setSale(null)}
+          onSold={(result) => setSale({ kind: 'done', result })}
+        />
+      )}
+      {sale?.kind === 'done' && (
+        <SaleResultDialog result={sale.result} clubName={club.name} onClose={() => setSale(null)} />
+      )}
     </>
   )
 }
