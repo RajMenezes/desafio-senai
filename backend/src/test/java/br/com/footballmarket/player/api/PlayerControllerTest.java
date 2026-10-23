@@ -77,6 +77,7 @@ class PlayerControllerTest {
 
     private void givenStored(Player player) {
         when(repository.findByIdAndDeletedAtIsNull(player.getId())).thenReturn(Optional.of(player));
+        when(repository.findActiveForUpdate(player.getId())).thenReturn(Optional.of(player));
     }
 
     @Test

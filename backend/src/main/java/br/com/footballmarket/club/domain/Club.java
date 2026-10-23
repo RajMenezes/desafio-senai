@@ -73,6 +73,17 @@ public class Club {
         return name.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Desconto do custo de uma compra. O limite de 50% (RN13) é conferido antes; o caixa nunca fica negativo.
+     */
+    public void debit(Money amount) {
+        Money newCash = cash.minus(amount);
+        if (newCash.isLessThan(Money.ZERO)) {
+            throw new IllegalStateException("Caixa negativo: " + newCash);
+        }
+        this.cash = newCash;
+    }
+
     public Integer getId() {
         return id;
     }

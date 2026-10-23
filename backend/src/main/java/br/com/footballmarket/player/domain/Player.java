@@ -158,6 +158,21 @@ public class Player {
         this.updatedAt = now;
     }
 
+    /**
+     * Compra (RN12): só jogador livre entra num elenco.
+     */
+    public void joinClub(Integer clubId, OffsetDateTime now) {
+        requireFree();
+        this.clubId = clubId;
+        this.updatedAt = now;
+    }
+
+    public void requireFree() {
+        if (hasClub()) {
+            throw new BusinessRuleException("O jogador não está livre: já pertence a um clube.");
+        }
+    }
+
     public boolean hasClub() {
         return clubId != null;
     }

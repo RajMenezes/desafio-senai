@@ -25,11 +25,13 @@ public class ClubService {
 
     private final ClubRepository repository;
     private final PlayerService players;
+    private final SquadContracts contracts;
     private final Clock clock;
 
-    public ClubService(ClubRepository repository, PlayerService players, Clock clock) {
+    public ClubService(ClubRepository repository, PlayerService players, SquadContracts contracts, Clock clock) {
         this.repository = repository;
         this.players = players;
+        this.contracts = contracts;
         this.clock = clock;
     }
 
@@ -61,11 +63,22 @@ public class ClubService {
     }
 
     /**
-     * Clube com o elenco na ordem da RN11.
+     * Clube com o elenco na ordem da RN11 e o contrato ativo de cada jogador.
      */
     @Transactional(readOnly = true)
-    public ValuedClub findById(Integer id) {
-        Club club = repository.findById(id).orElseThrow(() -> new NotFoundException("Clube não encontrado."));
-        return ValuedClub.of(club, players.squad(club.getId()));
+    public ClubDetail findById(Integer id) {
+        Club club = repository.findById(id).orElseThrow(ClubService::notFound);
+        return new ClubDetail(ValuedClub.of(club, players.squad(club.getId())), contracts.activeByPlayer(club.getId()));
+    }
+
+    /**
+     * Clube com trava da linha até o fim da transação, para compras e vendas.
+     */
+    public Club findForUpdate(Integer id) {
+        return repository.findByIdForUpdate(id).orElseThrow(ClubService::notFound);
+    }
+
+    private static NotFoundException notFound() {
+        return new NotFoundException("Clube não encontrado.");
     }
 }

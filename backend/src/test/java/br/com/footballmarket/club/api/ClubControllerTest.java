@@ -2,6 +2,8 @@ package br.com.footballmarket.club.api;
 
 import br.com.footballmarket.FixedClockConfig;
 import br.com.footballmarket.club.application.ClubService;
+import br.com.footballmarket.club.application.SquadContracts;
+import br.com.footballmarket.club.application.SquadContracts.SquadContract;
 import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.club.infra.ClubRepository;
 import br.com.footballmarket.player.application.ClubDirectory;
@@ -12,6 +14,7 @@ import br.com.footballmarket.player.domain.PlayerFixtures;
 import br.com.footballmarket.player.domain.Position;
 import br.com.footballmarket.player.infra.PlayerRepository;
 import br.com.footballmarket.shared.config.JacksonConfig;
+import br.com.footballmarket.shared.money.Money;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -23,7 +26,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static br.com.footballmarket.club.domain.ClubFixtures.aguias;
@@ -65,6 +71,9 @@ class ClubControllerTest {
 
     @MockitoBean
     private ClubDirectory clubDirectory;
+
+    @MockitoBean
+    private SquadContracts squadContracts;
 
     private ResultActions create(String body) throws Exception {
         return mvc.perform(post("/api/v1/clubs").contentType(MediaType.APPLICATION_JSON).content(body));
@@ -193,6 +202,8 @@ class ClubControllerTest {
                 inSquad(withCondition(meiaLua(), Condition.MAL_CONDICIONADO), 1, 2),
                 inSquad(player("Zeca Gol", Position.GOL, 25), 1, 7),
                 inSquad(player("Bia Gol", Position.GOL, 25), 1, 9)));
+        when(squadContracts.activeByPlayer(1)).thenReturn(Map.of(2, new SquadContract(Money.of("37.00"),
+                OffsetDateTime.of(2027, 3, 2, 10, 15, 0, 0, ZoneOffset.ofHours(-3)), 120, 10)));
 
         mvc.perform(get("/api/v1/clubs/1"))
                 .andExpect(status().isOk())
@@ -200,7 +211,13 @@ class ClubControllerTest {
                 .andExpect(jsonPath("$.players[*].name").value(contains("Bia Gol", "Zeca Gol", "Meia Lua", "Ana Ata")))
                 .andExpect(jsonPath("$.players[2].market_value").value(37.00))
                 .andExpect(jsonPath("$.players[2].club_id").value(1))
-                .andExpect(jsonPath("$.players[2].overall").value(75));
+                .andExpect(jsonPath("$.players[2].overall").value(75))
+                .andExpect(jsonPath("$.players[2].contract.purchase_value").value(37.00))
+                .andExpect(jsonPath("$.players[2].contract.loyalty_until").value("2027-03-02T10:15:00-03:00"))
+                .andExpect(jsonPath("$.players[2].contract.remaining_days").value(120))
+                .andExpect(jsonPath("$.players[2].contract.penalty_rate").value(10))
+                .andExpect(jsonPath("$.players[2].player").doesNotExist())
+                .andExpect(jsonPath("$.players[0].contract").isEmpty());
     }
 
     @Test

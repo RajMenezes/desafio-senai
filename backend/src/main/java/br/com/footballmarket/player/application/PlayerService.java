@@ -48,6 +48,20 @@ public class PlayerService {
     }
 
     /**
+     * Busca com trava da linha até o fim da transação, para operações que mudam o jogador
+     * (edição, condição, exclusão, compra e venda): assim elas não se atropelam.
+     */
+    public Player findForUpdate(Integer id) {
+        return repository.findActiveForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Jogador não encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public long squadSize(Integer clubId) {
+        return repository.countByClubId(clubId);
+    }
+
+    /**
      * RN07: o banco aplica os filtros de colunas gravadas; a busca sem acentos, a faixa de valor de mercado
      * (calculado, RN05) e a ordenação ficam aqui, e a paginação vem por último.
      */
@@ -87,20 +101,20 @@ public class PlayerService {
     }
 
     public Player update(Integer id, UpdatePlayerCommand command) {
-        Player player = findById(id);
+        Player player = findForUpdate(id);
         player.updateProfile(command.name(), command.position(), command.agility(), command.age(), now());
         return player;
     }
 
     public Player changeCondition(Integer id, Condition condition) {
-        Player player = findById(id);
+        Player player = findForUpdate(id);
         player.changeCondition(condition, now());
         // Etapa 8: titular que passa a DOENTE sai da escalação (RN19)
         return player;
     }
 
     public void delete(Integer id) {
-        findById(id).delete(now());
+        findForUpdate(id).delete(now());
     }
 
     private OffsetDateTime now() {
