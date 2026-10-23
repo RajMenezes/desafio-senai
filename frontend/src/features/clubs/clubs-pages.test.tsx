@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { player } from '@/features/players/test-fixtures'
-import { jsonError, renderPage, stubApi } from '@/test/render-page'
+import { EMPTY_HISTORY, jsonError, renderPage, stubApi } from '@/test/render-page'
 import { ClubPage } from './club-page'
 import { ClubsPage } from './clubs-page'
 import type { Club, ClubDetail } from './types'
@@ -121,7 +121,7 @@ describe('ClubsPage', () => {
 
 describe('ClubPage', () => {
   it('mostra os valores do clube e o elenco com o contrato', async () => {
-    stubApi(() => aguias)
+    stubApi((url) => (url.pathname.endsWith('/transactions') ? EMPTY_HISTORY : aguias))
     renderPage(<ClubPage />, { path: '/clubes/:clubId', url: '/clubes/1' })
 
     expect(await screen.findByRole('heading', { name: 'Águias FC' })).toBeInTheDocument()
@@ -140,7 +140,9 @@ describe('ClubPage', () => {
   })
 
   it('mostra o elenco vazio com o caminho para os jogadores livres', async () => {
-    stubApi(() => ({ ...clubs[1], players: [] }))
+    stubApi((url) =>
+      url.pathname.endsWith('/transactions') ? EMPTY_HISTORY : { ...clubs[1], players: [] },
+    )
     renderPage(<ClubPage />, { path: '/clubes/:clubId', url: '/clubes/2' })
 
     expect(await screen.findByText('Nenhum jogador no elenco')).toBeInTheDocument()

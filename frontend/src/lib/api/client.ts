@@ -71,3 +71,25 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
   return (await response.json()) as T
 }
+
+export interface DownloadedFile {
+  blob: Blob
+  filename?: string
+}
+
+/** Nome do arquivo no cabeçalho `Content-Disposition` (ex.: `attachment; filename="a.csv"`). */
+function filenameFrom(contentDisposition: string | null): string | undefined {
+  return contentDisposition?.match(/filename="?([^";]+)"?/)?.[1]
+}
+
+/** Baixa um arquivo da API; as recusas continuam vindo em JSON, com `message`. */
+export async function requestFile(
+  path: string,
+  options: RequestOptions = {},
+): Promise<DownloadedFile> {
+  const response = await send(path, options)
+  return {
+    blob: await response.blob(),
+    filename: filenameFrom(response.headers.get('Content-Disposition')),
+  }
+}

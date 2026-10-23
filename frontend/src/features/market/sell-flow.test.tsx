@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ClubPage } from '@/features/clubs/club-page'
 import type { ClubDetail } from '@/features/clubs/types'
 import { player } from '@/features/players/test-fixtures'
-import { jsonError, renderPage, stubApi } from '@/test/render-page'
+import { EMPTY_HISTORY, jsonError, renderPage, stubApi } from '@/test/render-page'
 import type { SaleResult } from './types'
 
 const club: ClubDetail = {
@@ -47,7 +47,10 @@ const sale: SaleResult = {
 }
 
 function stubClubApi(onSell: () => unknown) {
-  return stubApi((_url, init) => (init?.method === 'POST' ? onSell() : club))
+  return stubApi((url, init) => {
+    if (init?.method === 'POST') return onSell()
+    return url.pathname.endsWith('/transactions') ? EMPTY_HISTORY : club
+  })
 }
 
 async function openSale() {
@@ -84,6 +87,11 @@ describe('venda de jogador', () => {
     expect(within(result).getByText('RESCINDIDO')).toBeInTheDocument()
     expect(within(result).getByText('Novo caixa do Águias FC')).toBeInTheDocument()
     expect(within(result).getByText('97,60')).toBeInTheDocument()
+
+    await userEvent.click(within(result).getByRole('button', { name: 'Ver histórico' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Venda concluída' })).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Histórico/ })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('explica a venda sem multa quando a fidelidade já terminou', async () => {

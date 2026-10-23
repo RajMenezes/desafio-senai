@@ -58,3 +58,15 @@ export function jsonError(status: number, message: string) {
     headers: { 'Content-Type': 'application/json' },
   })
 }
+
+/** Histórico de transações vazio, para páginas de clube que não testam o histórico. */
+export const EMPTY_HISTORY = {
+  data: [],
+  summary: {
+    total_spent: 0,
+    total_received: 0,
+    total_fees: 0,
+    total_penalties: 0,
+    total_profit: 0,
+  },
+}

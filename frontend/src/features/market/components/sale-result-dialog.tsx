@@ -1,5 +1,6 @@
-import { CircleCheck } from 'lucide-react'
+import { CircleCheck, History } from 'lucide-react'
 import { ResultRows } from '@/components/common/result-rows'
+import { SignedMoney } from '@/components/common/signed-money'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,25 +12,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatInteger, formatMoney, formatSignedMoney } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import type { SaleResult } from '../types'
-
-function SignedValue({ value }: { value: number }) {
-  return (
-    <span className={cn(value > 0 && 'text-success', value < 0 && 'text-destructive')}>
-      {formatSignedMoney(value)}
-    </span>
-  )
-}
 
 interface SaleResultDialogProps {
   result: SaleResult
   clubName: string
   onClose: () => void
+  onShowHistory: () => void
 }
 
 /** Resultado da venda com os valores devolvidos pela API (sem recalcular). */
-export function SaleResultDialog({ result, clubName, onClose }: SaleResultDialogProps) {
+export function SaleResultDialog({
+  result,
+  clubName,
+  onClose,
+  onShowHistory,
+}: SaleResultDialogProps) {
   const loyaltyFulfilled = result.penalty_rate === 0
   const rows = [
     { label: 'Valor de compra', value: formatMoney(result.purchase_value) },
@@ -46,7 +44,7 @@ export function SaleResultDialog({ result, clubName, onClose }: SaleResultDialog
         : `${result.penalty_rate}% do valor de venda, com teto de 10,00`,
       value: formatMoney(result.penalty),
     },
-    { label: 'Lucro', value: <SignedValue value={result.profit} /> },
+    { label: 'Lucro', value: <SignedMoney value={result.profit} /> },
     {
       label: 'Comissão',
       hint:
@@ -86,6 +84,10 @@ export function SaleResultDialog({ result, clubName, onClose }: SaleResultDialog
         </DialogHeader>
         <ResultRows rows={rows} />
         <DialogFooter>
+          <Button variant="outline" onClick={onShowHistory}>
+            <History data-icon="inline-start" aria-hidden />
+            Ver histórico
+          </Button>
           <Button onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   Coins,
+  History,
   Landmark,
   SearchX,
   Shirt,
@@ -9,7 +10,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { usePageTitle } from '@/app/page-title'
 import { paths } from '@/app/paths'
 import { EmptyState } from '@/components/common/empty-state'
@@ -19,8 +20,11 @@ import { StatCard } from '@/components/common/stat-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useTransactions } from '@/features/market/api'
 import { SaleResultDialog } from '@/features/market/components/sale-result-dialog'
+import { TransactionHistory } from '@/features/market/components/transaction-history'
 import { SellDialog } from '@/features/market/components/sell-dialog'
+import { ALL_TRANSACTION_FILTERS } from '@/features/market/transaction-filters'
 import type { SaleResult } from '@/features/market/types'
 import { ApiError, getErrorMessage } from '@/lib/api/errors'
 import { formatMoney } from '@/lib/format'
@@ -160,10 +164,24 @@ function SquadSection({
   )
 }
 
+const CLUB_TABS = ['elenco', 'historico'] as const
+type ClubTab = (typeof CLUB_TABS)[number]
+
+/** Aba aberta, guardada na URL (`?aba=historico`); a padrão é o elenco. */
+function useClubTab(): [ClubTab, (tab: ClubTab) => void] {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = CLUB_TABS.find((value) => value === searchParams.get('aba')) ?? 'elenco'
+  const setTab = (value: ClubTab) =>
+    setSearchParams(value === 'elenco' ? {} : { aba: value }, { replace: true })
+  return [tab, setTab]
+}
+
 export function ClubPage() {
   const { clubId } = useParams()
   const id = parseClubId(clubId)
   const query = useClub(id ?? 0, id !== undefined)
+  const historyQuery = useTransactions(id ?? 0, ALL_TRANSACTION_FILTERS, id !== undefined)
+  const [tab, setTab] = useClubTab()
   const [sale, setSale] = useState<
     { kind: 'confirm'; player: SquadPlayer } | { kind: 'done'; result: SaleResult } | null
   >(null)
@@ -190,16 +208,29 @@ export function ClubPage() {
     <>
       <ClubHeader club={club} />
       <ClubStats club={club} />
-      <Tabs defaultValue="squad" className="gap-4">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(CLUB_TABS.find((option) => option === value) ?? 'elenco')}
+        className="gap-4"
+      >
         <TabsList variant="line" aria-label="Seções do clube">
-          <TabsTrigger value="squad" className="gap-1.5">
+          <TabsTrigger value="elenco" className="gap-1.5">
             <Shirt aria-hidden />
-            Elenco
-            <Badge variant="secondary">{club.players.length}</Badge>
+            Elenco <Badge variant="secondary">{club.players.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="gap-1.5">
+            <History aria-hidden />
+            Histórico{' '}
+            {historyQuery.data && (
+              <Badge variant="secondary">{historyQuery.data.data.length}</Badge>
+            )}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="squad">
+        <TabsContent value="elenco">
           <SquadSection club={club} onSell={(player) => setSale({ kind: 'confirm', player })} />
+        </TabsContent>
+        <TabsContent value="historico">
+          <TransactionHistory clubId={club.id} />
         </TabsContent>
       </Tabs>
       {sale?.kind === 'confirm' && (
@@ -211,7 +242,15 @@ export function ClubPage() {
         />
       )}
       {sale?.kind === 'done' && (
-        <SaleResultDialog result={sale.result} clubName={club.name} onClose={() => setSale(null)} />
+        <SaleResultDialog
+          result={sale.result}
+          clubName={club.name}
+          onClose={() => setSale(null)}
+          onShowHistory={() => {
+            setSale(null)
+            setTab('historico')
+          }}
+        />
       )}
     </>
   )

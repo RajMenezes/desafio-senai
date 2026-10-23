@@ -48,3 +48,42 @@ export interface SaleResult {
   contract_status: ClosedContractStatus
   club_cash: number
 }
+
+/** Transação do histórico (RN17): valores e nome gravados no momento da operação. */
+export interface Transaction {
+  id: number
+  club_id: number
+  player_id: number
+  player_name: string
+  type: TransactionType
+  value: number
+  fee: number
+  penalty: number
+  profit: number | null
+  cash_change: number
+  created_at: string
+}
+
+export interface TransactionSummary {
+  total_spent: number
+  total_received: number
+  total_fees: number
+  total_penalties: number
+  total_profit: number
+}
+
+export interface TransactionHistory {
+  data: Transaction[]
+  summary: TransactionSummary
+}
+
+export const TRANSACTION_TYPES: { value: TransactionType; label: string }[] = [
+  { value: 'COMPRA', label: 'Compra' },
+  { value: 'VENDA', label: 'Venda' },
+]
+
+/** Filtros do histórico: tipos marcados (todos = sem filtro) e jogador opcional. */
+export interface TransactionFilters {
+  types: TransactionType[]
+  playerId?: number
+}
