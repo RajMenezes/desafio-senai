@@ -3,6 +3,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { ResultRows } from '@/components/common/result-rows'
 import { PenaltyBadge } from '@/features/clubs/components/penalty-badge'
 import type { SquadPlayer } from '@/features/clubs/types'
+import { StarterWarning } from '@/features/league/components/starter-warning'
 import { PlayerSummary } from '@/features/players/components/player-summary'
 import { formatDateTime } from '@/lib/date-time'
 import { formatInteger, formatMoney } from '@/lib/format'
@@ -12,12 +13,13 @@ import type { SaleResult } from '../types'
 interface SellDialogProps {
   player: SquadPlayer
   clubName: string
+  isStarter: boolean
   onClose: () => void
   onSold: (result: SaleResult) => void
 }
 
 /** Confirmação da venda com o contrato atual; multa, lucro, comissão e crédito vêm da API. */
-export function SellDialog({ player, clubName, onClose, onSold }: SellDialogProps) {
+export function SellDialog({ player, clubName, isStarter, onClose, onSold }: SellDialogProps) {
   const sellPlayer = useSellPlayer(player.id)
   const { contract } = player
 
@@ -33,6 +35,7 @@ export function SellDialog({ player, clubName, onClose, onSold }: SellDialogProp
       error={sellPlayer.error}
       errorTitle="A venda foi recusada"
     >
+      {isStarter && <StarterWarning playerName={player.name} clubName={clubName} reason="sale" />}
       <PlayerSummary player={player} detail="market_value" />
       <ResultRows
         rows={[

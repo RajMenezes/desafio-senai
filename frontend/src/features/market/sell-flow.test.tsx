@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ClubPage } from '@/features/clubs/club-page'
 import type { ClubDetail } from '@/features/clubs/types'
 import { player } from '@/features/players/test-fixtures'
-import { EMPTY_HISTORY, jsonError, renderPage, stubApi } from '@/test/render-page'
+import { EMPTY_HISTORY, emptyLineup, jsonError, renderPage, stubApi } from '@/test/render-page'
 import type { SaleResult } from './types'
 
 const club: ClubDetail = {
@@ -46,10 +46,11 @@ const sale: SaleResult = {
   club_cash: 97.6,
 }
 
-function stubClubApi(onSell: () => unknown) {
+function stubClubApi(onSell: () => unknown, lineup: unknown = emptyLineup(1)) {
   return stubApi((url, init) => {
     if (init?.method === 'POST') return onSell()
-    return url.pathname.endsWith('/transactions') ? EMPTY_HISTORY : club
+    if (url.pathname.endsWith('/transactions')) return EMPTY_HISTORY
+    return url.pathname.endsWith('/lineup') ? lineup : club
   })
 }
 
@@ -126,5 +127,22 @@ describe('venda de jogador', () => {
     expect(
       within(confirm).getByText('Felipe Moura já está livre e não pode ser vendido.'),
     ).toBeInTheDocument()
+  })
+
+  it('avisa que o titular sai da escalação', async () => {
+    stubClubApi(() => sale, {
+      club_id: 1,
+      formation: '2-1-1',
+      complete: true,
+      players: [club.players[0]],
+    })
+
+    const confirm = await openSale()
+    expect(within(confirm).getByText('Felipe Moura é titular')).toBeInTheDocument()
+
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Confirmar venda' }))
+
+    const result = await screen.findByRole('dialog', { name: 'Venda concluída' })
+    expect(within(result).getByText(/voltou a ficar livre e saiu da escalação/)).toBeInTheDocument()
   })
 })

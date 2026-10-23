@@ -17,6 +17,7 @@ import type { SaleResult } from '../types'
 interface SaleResultDialogProps {
   result: SaleResult
   clubName: string
+  leftLineup: boolean
   onClose: () => void
   onShowHistory: () => void
 }
@@ -25,6 +26,7 @@ interface SaleResultDialogProps {
 export function SaleResultDialog({
   result,
   clubName,
+  leftLineup,
   onClose,
   onShowHistory,
 }: SaleResultDialogProps) {
@@ -78,7 +80,7 @@ export function SaleResultDialog({
           </div>
           <DialogTitle>Venda concluída</DialogTitle>
           <DialogDescription>
-            {result.player_name} voltou a ficar livre.
+            {result.player_name} voltou a ficar livre{leftLineup && ' e saiu da escalação'}.
             {loyaltyFulfilled && ' A fidelidade já tinha terminado, então não houve multa.'}
           </DialogDescription>
         </DialogHeader>

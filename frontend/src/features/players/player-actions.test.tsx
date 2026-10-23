@@ -24,6 +24,9 @@ function stubPlayersApi(onWrite: WriteHandler = () => ({})) {
   return stubApi((url, init) => {
     if (init?.method && init.method !== 'GET') return onWrite(url, init)
     if (url.pathname.endsWith('/clubs')) return clubs
+    if (url.pathname.endsWith('/lineup')) {
+      return { club_id: 1, formation: '2-1-1', complete: false, players: [clubPlayer] }
+    }
     const detail = url.pathname.match(/\/players\/(\d+)$/)
     if (detail) return [freePlayer, clubPlayer].find((p) => p.id === Number(detail[1]))
     return page([freePlayer, clubPlayer])
@@ -196,6 +199,19 @@ describe('alteração de condição', () => {
     expect(writeRequests(fetchMock)).toEqual([
       { method: 'PATCH', path: '/players/1/condition', body: { condition: 'MAL_CONDICIONADO' } },
     ])
+  })
+})
+
+describe('condição de titular', () => {
+  it('avisa que o titular sai da escalação ao passar a Doente', async () => {
+    stubPlayersApi()
+    renderPage(<PlayersPage />)
+
+    await openRowAction('Danilo Freitas', 'Alterar condição')
+    await userEvent.click(screen.getByRole('radio', { name: /Doente/ }))
+
+    expect(await screen.findByText('Danilo Freitas é titular')).toBeInTheDocument()
+    expect(screen.getByText(/o Águias FC só volta a jogar partidas/)).toBeInTheDocument()
   })
 })
 

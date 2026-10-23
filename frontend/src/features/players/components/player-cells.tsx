@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { initialsOf } from '../player-names'
 import { CONDITION_LABELS, type Condition, type Position } from '../types'
 
 const AVATAR_COLORS = [
@@ -9,13 +10,6 @@ const AVATAR_COLORS = [
   'bg-avatar-teal text-avatar-teal-foreground',
   'bg-avatar-violet text-avatar-violet-foreground',
 ]
-
-function initialsOf(name: string): string {
-  const words = name.trim().split(/\s+/)
-  const first = words[0]?.[0] ?? ''
-  const last = words.length > 1 ? (words[words.length - 1]?.[0] ?? '') : ''
-  return `${first}${last}`.toUpperCase()
-}
 
 export function PlayerAvatar({ id, name }: { id: number; name: string }) {
   return (

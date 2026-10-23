@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ClipboardList,
   Coins,
   History,
   Landmark,
@@ -20,6 +21,8 @@ import { StatCard } from '@/components/common/stat-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useLineup } from '@/features/league/api'
+import { LineupTab } from '@/features/league/components/lineup-tab'
 import { useTransactions } from '@/features/market/api'
 import { SaleResultDialog } from '@/features/market/components/sale-result-dialog'
 import { TransactionHistory } from '@/features/market/components/transaction-history'
@@ -164,7 +167,7 @@ function SquadSection({
   )
 }
 
-const CLUB_TABS = ['elenco', 'historico'] as const
+const CLUB_TABS = ['elenco', 'escalacao', 'historico'] as const
 type ClubTab = (typeof CLUB_TABS)[number]
 
 /** Aba aberta, guardada na URL (`?aba=historico`); a padrão é o elenco. */
@@ -181,9 +184,14 @@ export function ClubPage() {
   const id = parseClubId(clubId)
   const query = useClub(id ?? 0, id !== undefined)
   const historyQuery = useTransactions(id ?? 0, ALL_TRANSACTION_FILTERS, id !== undefined)
+  const lineupQuery = useLineup(id ?? 0, id !== undefined)
+  const isStarter = (playerId: number) =>
+    lineupQuery.data?.players.some((player) => player.id === playerId) ?? false
   const [tab, setTab] = useClubTab()
   const [sale, setSale] = useState<
-    { kind: 'confirm'; player: SquadPlayer } | { kind: 'done'; result: SaleResult } | null
+    | { kind: 'confirm'; player: SquadPlayer }
+    | { kind: 'done'; result: SaleResult; leftLineup: boolean }
+    | null
   >(null)
   const notFound =
     id === undefined || (query.error instanceof ApiError && query.error.status === 404)
@@ -218,6 +226,10 @@ export function ClubPage() {
             <Shirt aria-hidden />
             Elenco <Badge variant="secondary">{club.players.length}</Badge>
           </TabsTrigger>
+          <TabsTrigger value="escalacao" className="gap-1.5">
+            <ClipboardList aria-hidden />
+            Escalação
+          </TabsTrigger>
           <TabsTrigger value="historico" className="gap-1.5">
             <History aria-hidden />
             Histórico{' '}
@@ -229,6 +241,9 @@ export function ClubPage() {
         <TabsContent value="elenco">
           <SquadSection club={club} onSell={(player) => setSale({ kind: 'confirm', player })} />
         </TabsContent>
+        <TabsContent value="escalacao">
+          <LineupTab club={club} />
+        </TabsContent>
         <TabsContent value="historico">
           <TransactionHistory clubId={club.id} />
         </TabsContent>
@@ -237,14 +252,18 @@ export function ClubPage() {
         <SellDialog
           player={sale.player}
           clubName={club.name}
+          isStarter={isStarter(sale.player.id)}
           onClose={() => setSale(null)}
-          onSold={(result) => setSale({ kind: 'done', result })}
+          onSold={(result) =>
+            setSale({ kind: 'done', result, leftLineup: isStarter(sale.player.id) })
+          }
         />
       )}
       {sale?.kind === 'done' && (
         <SaleResultDialog
           result={sale.result}
           clubName={club.name}
+          leftLineup={sale.leftLineup}
           onClose={() => setSale(null)}
           onShowHistory={() => {
             setSale(null)

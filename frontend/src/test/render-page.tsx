@@ -70,3 +70,8 @@ export const EMPTY_HISTORY = {
     total_profit: 0,
   },
 }
+
+/** Clube sem escalação, como a API devolve em `GET /clubs/{id}/lineup` (RN19). */
+export function emptyLineup(clubId: number) {
+  return { club_id: clubId, formation: null, complete: false, players: [] }
+}

@@ -12,6 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useClubs } from '@/features/clubs/api'
+import { useLineup } from '@/features/league/api'
+import { StarterWarning } from '@/features/league/components/starter-warning'
 import { formatMoney } from '@/lib/format'
 import { notifySuccess } from '@/lib/notify'
 import { cn } from '@/lib/utils'
@@ -41,6 +44,11 @@ interface ConditionDialogProps {
 export function ConditionDialog({ player, onClose }: ConditionDialogProps) {
   const changeCondition = useChangeCondition(player.id)
   const [selected, setSelected] = useState<Condition>(player.condition)
+  const hasClub = player.club_id !== null
+  const lineupQuery = useLineup(player.club_id ?? 0, hasClub)
+  const clubsQuery = useClubs()
+  const isStarter = lineupQuery.data?.players.some((starter) => starter.id === player.id) ?? false
+  const clubName = clubsQuery.data?.find((club) => club.id === player.club_id)?.name ?? 'clube'
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !changeCondition.isPending) onClose()
@@ -116,6 +124,10 @@ export function ConditionDialog({ player, onClose }: ConditionDialogProps) {
             )
           })}
         </fieldset>
+
+        {isStarter && selected === 'DOENTE' && player.condition !== 'DOENTE' && (
+          <StarterWarning playerName={player.name} clubName={clubName} reason="sick" />
+        )}
 
         <DialogFooter>
           <Button variant="outline" disabled={changeCondition.isPending} onClick={onClose}>
