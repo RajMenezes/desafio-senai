@@ -1,0 +1,2 @@
+# Variáveis locais do docker-compose.yml (o modelo versionado é o .env.example)
+.env

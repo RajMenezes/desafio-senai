@@ -11,6 +11,11 @@ const signedMoneyFormat = new Intl.NumberFormat('pt-BR', {
 
 const integerFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
 
+const signedIntegerFormat = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 0,
+  signDisplay: 'exceptZero',
+})
+
 /** Moedas com 2 casas e vírgula decimal: 1744.14 → "1.744,14". */
 export function formatMoney(value: number): string {
   return moneyFormat.format(value)
@@ -24,4 +29,9 @@ export function formatSignedMoney(value: number): string {
 /** Inteiro com separador de milhar: 1089 → "1.089". */
 export function formatInteger(value: number): string {
   return integerFormat.format(value)
+}
+
+/** Inteiro com sinal sempre visível, como o saldo de gols: 2 → "+2", -2 → "-2", 0 → "0". */
+export function formatSignedInteger(value: number): string {
+  return signedIntegerFormat.format(value)
 }

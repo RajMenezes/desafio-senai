@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatInteger, formatMoney, formatSignedMoney } from './format'
+import { formatInteger, formatMoney, formatSignedInteger, formatSignedMoney } from './format'
 
 describe('formatMoney', () => {
   it.each([
@@ -26,5 +26,15 @@ describe('formatSignedMoney', () => {
 describe('formatInteger', () => {
   it('usa ponto como separador de milhar', () => {
     expect(formatInteger(1089)).toBe('1.089')
+  })
+})
+
+describe('formatSignedInteger', () => {
+  it.each([
+    [2, '+2'],
+    [-2, '-2'],
+    [0, '0'],
+  ])('formata %d como %s', (value, expected) => {
+    expect(formatSignedInteger(value)).toBe(expected)
   })
 })

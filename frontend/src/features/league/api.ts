@@ -1,10 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { clubKeys } from '@/features/clubs/api'
 import { request } from '@/lib/api/client'
-import type { Lineup, Match, PlayMatchRequest, SaveLineupRequest } from './types'
+import type { Lineup, Match, PlayMatchRequest, SaveLineupRequest, Standing } from './types'
 
 /** A escalação fica sob a chave dos clubes: venda e condição DOENTE a mudam (RN19). */
-export const lineupKeys = {
+const lineupKeys = {
   detail: (clubId: number) => [...clubKeys.all, 'lineup', clubId] as const,
 }
 
@@ -26,15 +26,25 @@ export function useSaveLineup(clubId: number) {
   })
 }
 
-export const matchKeys = {
+const matchKeys = {
   all: ['matches'] as const,
   list: (clubId?: number) => [...matchKeys.all, 'list', clubId ?? 'all'] as const,
   detail: (id: number) => [...matchKeys.all, 'detail', id] as const,
 }
 
-/** Classificação (RN21): muda a cada partida jogada. */
-export const standingsKeys = {
-  all: ['standings'] as const,
+/**
+ * Classificação (RN21): muda a cada partida e a cada clube criado (que entra zerado).
+ * Fica sob a chave dos clubes para que a criação de clube também a recarregue.
+ */
+const standingsKeys = {
+  all: [...clubKeys.all, 'standings'] as const,
+}
+
+export function useStandings() {
+  return useQuery({
+    queryKey: standingsKeys.all,
+    queryFn: () => request<Standing[]>('/standings'),
+  })
 }
 
 /** Partidas da mais recente para a mais antiga; com `clubId`, só as do clube. */

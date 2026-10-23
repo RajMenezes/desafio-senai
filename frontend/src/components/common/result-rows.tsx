@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-export interface ResultRow {
+interface ResultRow {
   label: string
   hint?: string
   value: ReactNode

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-export interface FilterOption<T extends string | number> {
+interface FilterOption<T extends string | number> {
   value: T
   label: string
 }

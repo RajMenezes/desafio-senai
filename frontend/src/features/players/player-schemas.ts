@@ -19,7 +19,6 @@ export const ATTRIBUTES = [
   { key: 'defending', label: 'Defesa' },
   { key: 'physical', label: 'Físico' },
 ] as const
-export type AttributeKey = (typeof ATTRIBUTES)[number]['key']
 
 const nameField = z
   .string()

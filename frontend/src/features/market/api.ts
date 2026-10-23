@@ -12,7 +12,7 @@ import type {
 } from './types'
 
 /** O histórico fica sob a chave dos clubes: compras e vendas o recarregam junto com o caixa. */
-export const transactionKeys = {
+const transactionKeys = {
   history: (clubId: number, filters: TransactionFilters) =>
     [...clubKeys.all, 'transactions', clubId, toTransactionParams(filters)] as const,
 }

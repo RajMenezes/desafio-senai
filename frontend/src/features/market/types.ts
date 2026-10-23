@@ -27,7 +27,7 @@ export interface BuyPlayerRequest {
 }
 
 /** Situação do contrato depois da venda (RN15): com multa, rescindido; sem multa, encerrado. */
-export type ClosedContractStatus = 'RESCINDIDO' | 'ENCERRADO'
+type ClosedContractStatus = 'RESCINDIDO' | 'ENCERRADO'
 
 /** Resposta do `POST /players/{id}/sell` (2.3.2). `fee` é a comissão sobre o lucro. */
 export interface SaleResult {

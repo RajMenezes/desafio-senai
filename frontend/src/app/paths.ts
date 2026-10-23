@@ -1,6 +1,9 @@
 /** Parâmetro da URL de clubes que abre o diálogo de criação. */
 export const CREATE_CLUB_PARAM = 'novo'
 
+/** Parâmetro da URL de partidas que abre o diálogo de nova partida. */
+export const NEW_MATCH_PARAM = 'nova'
+
 /** Caminhos das telas, para links e navegação. */
 export const paths = {
   players: '/jogadores',
@@ -9,6 +12,7 @@ export const paths = {
   newClub: `/clubes?${CREATE_CLUB_PARAM}`,
   club: (id: number) => `/clubes/${id}`,
   matches: '/partidas',
+  newMatch: `/partidas?${NEW_MATCH_PARAM}`,
   match: (id: number) => `/partidas/${id}`,
   standings: '/classificacao',
 }

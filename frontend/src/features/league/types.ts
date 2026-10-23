@@ -16,7 +16,7 @@ export interface SaveLineupRequest {
   player_ids: number[]
 }
 
-export type MatchResult = 'MANDANTE' | 'VISITANTE' | 'EMPATE'
+type MatchResult = 'MANDANTE' | 'VISITANTE' | 'EMPATE'
 
 export const MATCH_RESULT_LABELS: Record<MatchResult, string> = {
   MANDANTE: 'Vitória do mandante',
@@ -31,7 +31,7 @@ export interface MatchTeam {
   goals: number
 }
 
-export type DuelAttribute = 'shooting' | 'passing' | 'dribbling' | 'defending'
+type DuelAttribute = 'shooting' | 'passing' | 'dribbling' | 'defending'
 
 export const DUEL_ATTRIBUTE_LABELS: Record<DuelAttribute, string> = {
   shooting: 'Finalização',
@@ -71,4 +71,19 @@ export interface Match {
 export interface PlayMatchRequest {
   home_club_id: number
   away_club_id: number
+}
+
+/** Linha da classificação (RN21), na ordem e com os totais calculados pela API. */
+export interface Standing {
+  position: number
+  club_id: number
+  club_name: string
+  played: number
+  wins: number
+  draws: number
+  losses: number
+  goals_for: number
+  goals_against: number
+  goal_difference: number
+  points: number
 }

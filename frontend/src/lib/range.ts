@@ -15,7 +15,7 @@ interface RangeErrors {
   max?: string
 }
 
-export type RangeValidation = { range: Range } | { errors: RangeErrors }
+type RangeValidation = { range: Range } | { errors: RangeErrors }
 
 const INTEGER_PATTERN = /^\d+$/
 const DECIMAL_PATTERN = /^\d+([.,]\d{1,2})?$/

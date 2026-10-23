@@ -2,7 +2,7 @@ import type { QueryParams } from '@/lib/api/client'
 import type { Range } from '@/lib/range'
 import { CONDITIONS, POSITIONS, type Condition, type Position } from './types'
 
-export const PLAYERS_PAGE_SIZE = 10
+const PLAYERS_PAGE_SIZE = 10
 
 export const MARKET_VALUE_LIMITS = { min: 0, max: 550 } as const
 export const SEARCH_MIN_LENGTH = 2
@@ -18,7 +18,7 @@ export const PLAYER_SORTS = [
   { value: 'age_asc', label: 'Menor idade' },
   { value: 'position', label: 'Posição (GOL a ATA)' },
 ] as const
-export type PlayerSort = (typeof PLAYER_SORTS)[number]['value']
+type PlayerSort = (typeof PLAYER_SORTS)[number]['value']
 
 const DEFAULT_SORT: PlayerSort = 'name'
 

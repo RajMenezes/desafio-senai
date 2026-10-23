@@ -5,7 +5,7 @@ import type { Page } from '@/lib/api/types'
 import type { CreatePlayerRequest, UpdatePlayerRequest } from './player-schemas'
 import type { Condition, Player } from './types'
 
-export const playerKeys = {
+const playerKeys = {
   all: ['players'] as const,
   list: (params: QueryParams) => [...playerKeys.all, 'list', params] as const,
   detail: (id: number) => [...playerKeys.all, 'detail', id] as const,

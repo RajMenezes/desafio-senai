@@ -1,6 +1,6 @@
 import { ChevronRight, Plus, Shield, Swords } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
-import { paths } from '@/app/paths'
+import { NEW_MATCH_PARAM, paths } from '@/app/paths'
 import { EmptyState } from '@/components/common/empty-state'
 import { ErrorState } from '@/components/common/error-state'
 import { LoadingState } from '@/components/common/loading-state'
@@ -18,7 +18,6 @@ import type { Match } from './types'
 import { useClubAcronyms } from './use-club-acronyms'
 
 const CLUB_PARAM = 'club_id'
-const NEW_MATCH_PARAM = 'nova'
 
 function parseClubId(value: string | null): number | undefined {
   return value !== null && /^[1-9]\d*$/.test(value) ? Number(value) : undefined

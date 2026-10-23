@@ -19,7 +19,7 @@ export interface Club {
 }
 
 /** Contrato ativo do jogador, calculado para uma venda agora (RN11, RN15). */
-export interface Contract {
+interface Contract {
   purchase_value: number
   loyalty_until: string
   remaining_days: number

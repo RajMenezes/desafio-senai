@@ -1,0 +1,3 @@
+# Scripts executados no Linux (Docker e Ubuntu da banca) precisam de fim de linha LF.
+mvnw text eol=lf
+*.sh text eol=lf

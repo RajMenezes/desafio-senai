@@ -1,6 +1,7 @@
 # Frontend – Passe
 
-Interface do sistema de gestão da liga, feita com React, TypeScript e Vite.
+Interface do sistema de gestão da liga, feita com React, TypeScript e Vite. O passo a passo completo
+(banco, API e interface, inclusive com Docker Compose) está no [README da raiz](../README.md).
 
 ## Stack
 
@@ -19,7 +20,8 @@ Interface do sistema de gestão da liga, feita com React, TypeScript e Vite.
 
 ## Configuração
 
-A origem da API fica na variável `VITE_API_URL`, já com o prefixo `/api/v1`. O valor padrão está no arquivo `.env`:
+A origem da API fica na variável `VITE_API_URL`, já com o prefixo `/api/v1`. O valor padrão está no
+`.env` versionado, e o modelo, no `.env.example`:
 
 | Variável       | Padrão                         |
 | -------------- | ------------------------------ |
@@ -38,6 +40,12 @@ npm run dev
 
 Interface em http://localhost:5173.
 
+## Docker
+
+O `Dockerfile` gera o build de produção (com `VITE_API_URL` informado como argumento de build) e o
+serve com Nginx (`nginx.conf`, que devolve o `index.html` para as rotas da SPA). Ele é usado pelo
+`docker-compose.yml` da raiz.
+
 ## Scripts
 
 | Comando                | O que faz                                              |
@@ -55,11 +63,19 @@ Interface em http://localhost:5173.
 
 ```
 src/
-  app/            rotas, providers e páginas gerais
+  app/            rotas, caminhos das telas e breadcrumb
   components/
-    common/       componentes compartilhados (cabeçalho de página, estados de lista, confirmação)
+    common/       componentes compartilhados (estados de lista, filtros, diálogos, paginação)
     layout/       menu lateral e cabeçalho
     ui/           componentes do shadcn/ui
-  features/       uma pasta por área do sistema (jogadores, clubes, liga)
-  lib/            cliente da API, formatação de valores e datas, notificações
+  features/
+    players/      jogadores: lista, filtros, cadastro, edição, condição, exclusão e detalhes
+    clubs/        clubes: lista, criação e página do clube com o elenco
+    market/       compra, venda e histórico de transações com CSV
+    league/       escalação, partidas, duelos e classificação
+  lib/            cliente da API, formatação de valores e datas, validação de faixas e texto
+  test/           configuração e utilitários dos testes
 ```
+
+Cada área em `features/` tem o seu `api.ts` (consultas e ações com TanStack Query), os tipos da API,
+as regras de validação e os componentes. Os testes ficam ao lado do código (`*.test.ts(x)`).

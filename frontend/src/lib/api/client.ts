@@ -72,7 +72,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return (await response.json()) as T
 }
 
-export interface DownloadedFile {
+interface DownloadedFile {
   blob: Blob
   filename?: string
 }
