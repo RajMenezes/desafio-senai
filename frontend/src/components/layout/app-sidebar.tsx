@@ -16,6 +16,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { useClubs } from '@/features/clubs/api'
+import { useMatches } from '@/features/league/api'
 import { usePlayers } from '@/features/players/api'
 import { removeAccents } from '@/lib/text'
 import { cn } from '@/lib/utils'
@@ -115,13 +116,14 @@ function ClubsGroup() {
 export function AppSidebar() {
   const playersCount = usePlayers({ limit: 1 }).data?.meta.total_items
   const clubsCount = useClubs().data?.length
+  const matchesCount = useMatches().data?.length
 
   const marketItems: NavItem[] = [
     { to: paths.players, label: 'Jogadores', icon: Users, count: playersCount },
     { to: paths.clubs, label: 'Clubes', icon: Shield, count: clubsCount },
   ]
   const leagueItems: NavItem[] = [
-    { to: paths.matches, label: 'Partidas', icon: Swords },
+    { to: paths.matches, label: 'Partidas', icon: Swords, count: matchesCount },
     { to: paths.standings, label: 'Classificação', icon: ListOrdered },
   ]
 

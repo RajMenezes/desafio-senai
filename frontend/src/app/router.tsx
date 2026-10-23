@@ -40,6 +40,13 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: 'partidas/:matchId',
+        handle: { ...handle('Liga', 'Partida'), parent: { title: 'Partidas', to: paths.matches } },
+        lazy: async () => ({
+          Component: (await import('@/features/league/match-page')).MatchPage,
+        }),
+      },
+      {
         path: 'classificacao',
         handle: handle('Liga', 'Classificação'),
         lazy: async () => ({

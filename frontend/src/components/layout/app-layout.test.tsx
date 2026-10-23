@@ -54,7 +54,11 @@ function renderLayout(initialPath: string) {
 }
 
 beforeEach(() => {
-  stubApi((url) => (url.pathname.endsWith('/clubs') ? clubs : page([player()], 23)))
+  stubApi((url) => {
+    if (url.pathname.endsWith('/clubs')) return clubs
+    if (url.pathname.endsWith('/matches')) return []
+    return page([player()], 23)
+  })
 })
 
 afterEach(() => {

@@ -9,5 +9,6 @@ export const paths = {
   newClub: `/clubes?${CREATE_CLUB_PARAM}`,
   club: (id: number) => `/clubes/${id}`,
   matches: '/partidas',
+  match: (id: number) => `/partidas/${id}`,
   standings: '/classificacao',
 }
