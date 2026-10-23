@@ -177,6 +177,27 @@ class MatchApiIntegrationTest extends PostgresIntegrationTest {
         assertThat(count("duelos_partida")).isZero();
     }
 
+    /**
+     * Exemplo 2.4.3, de ponta a ponta: Águias FC, Delta FC e Gama SC, depois de Águias FC 1 × 2 Delta FC.
+     */
+    @Test
+    void standingsAfterTheExampleMatch() throws Exception {
+        mvc.perform(get("/api/v1/standings"))
+                .andExpect(jsonPath("$[*].club_name").value(contains("Águias FC", "Delta FC", "Gama SC")));
+
+        play(aguias, delta).andExpect(status().isCreated());
+
+        mvc.perform(get("/api/v1/standings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].position").value(contains(1, 2, 3)))
+                .andExpect(jsonPath("$[*].club_id").value(contains(delta, gama, aguias)))
+                .andExpect(jsonPath("$[0].points").value(3))
+                .andExpect(jsonPath("$[0].goal_difference").value(1))
+                .andExpect(jsonPath("$[1].played").value(0))
+                .andExpect(jsonPath("$[2].losses").value(1))
+                .andExpect(jsonPath("$[2].goal_difference").value(-1));
+    }
+
     @Test
     void historyIsNewestFirstAndFiltersByClub() throws Exception {
         int first = JsonPath.read(play(aguias, delta).andReturn().getResponse().getContentAsString(), "$.id");
