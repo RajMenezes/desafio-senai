@@ -4,6 +4,7 @@ import { useMatches } from 'react-router'
 export interface RouteHandle {
   section: string
   title: string
+  parent?: { title: string; to: string }
 }
 
 export function useRouteHandle(): RouteHandle | undefined {

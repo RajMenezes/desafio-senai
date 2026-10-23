@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { paths } from '@/app/paths'
 import { TableSkeleton } from '@/components/common/table-skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -37,7 +38,7 @@ function ClubCell({ clubId, clubsById }: { clubId: number | null; clubsById: Map
   return (
     <div className="flex items-center gap-2">
       {club && <span className="text-xs font-semibold">{club.acronym}</span>}
-      <Link to={`/clubes/${clubId}`} className="underline underline-offset-4 hover:text-primary">
+      <Link to={paths.club(clubId)} className="underline underline-offset-4 hover:text-primary">
         {club?.name ?? `Clube ${clubId}`}
       </Link>
     </div>

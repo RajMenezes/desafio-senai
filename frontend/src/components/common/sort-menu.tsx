@@ -8,22 +8,27 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PLAYER_SORTS, type PlayerSort } from '../player-filters'
 
-interface PlayerSortMenuProps {
-  sort: PlayerSort
-  onChange: (sort: PlayerSort) => void
+interface SortOption<T extends string> {
+  value: T
+  label: string
+}
+
+interface SortMenuProps<T extends string> {
+  options: readonly SortOption<T>[]
+  value: T
+  onChange: (value: T) => void
 }
 
 function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1)
 }
 
-export function PlayerSortMenu({ sort, onChange }: PlayerSortMenuProps) {
-  const current = PLAYER_SORTS.find((option) => option.value === sort) ?? PLAYER_SORTS[0]
+export function SortMenu<T extends string>({ options, value, onChange }: SortMenuProps<T>) {
+  const current = options.find((option) => option.value === value) ?? options[0]
 
-  const handleValueChange = (value: string) => {
-    const selected = PLAYER_SORTS.find((option) => option.value === value)
+  const handleValueChange = (newValue: string) => {
+    const selected = options.find((option) => option.value === newValue)
     if (selected) onChange(selected.value)
   }
 
@@ -38,8 +43,8 @@ export function PlayerSortMenu({ sort, onChange }: PlayerSortMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={sort} onValueChange={handleValueChange}>
-          {PLAYER_SORTS.map((option) => (
+        <DropdownMenuRadioGroup value={value} onValueChange={handleValueChange}>
+          {options.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
               {option.label}
             </DropdownMenuRadioItem>

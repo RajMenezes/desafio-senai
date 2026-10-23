@@ -1,16 +1,16 @@
 import { Plus, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/common/page-header'
+import { SortMenu } from '@/components/common/sort-menu'
 import { Button } from '@/components/ui/button'
 import { useClubs } from '@/features/clubs/api'
 import { usePlayers } from './api'
 import { ActiveFilters } from './components/active-filters'
 import { PlayerDialogs, type PlayerDialogState } from './components/player-dialogs'
-import { PlayerSortMenu } from './components/player-sort-menu'
 import { PlayerTabs } from './components/player-tabs'
 import { PlayersList } from './components/players-list'
 import { PlayersToolbar } from './components/players-toolbar'
-import { toPlayersQuery } from './player-filters'
+import { PLAYER_SORTS, toPlayersQuery } from './player-filters'
 import { usePlayerFilters } from './use-player-filters'
 import { usePlayerTabCounts } from './use-player-tab-counts'
 
@@ -61,7 +61,11 @@ export function PlayersPage() {
             freeDisabled={filters.clubId !== undefined}
             onChange={(tab) => updateFilters({ tab })}
           />
-          <PlayerSortMenu sort={filters.sort} onChange={(sort) => updateFilters({ sort })} />
+          <SortMenu
+            options={PLAYER_SORTS}
+            value={filters.sort}
+            onChange={(sort) => updateFilters({ sort })}
+          />
         </div>
         <PlayersList
           query={playersQuery}

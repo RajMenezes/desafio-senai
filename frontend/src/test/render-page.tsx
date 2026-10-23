@@ -6,9 +6,26 @@ import { vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { createQueryClient } from '@/lib/api/query-client'
 
+interface RenderPageOptions {
+  /** Padrão da rota, para páginas com parâmetros (ex.: "/clubes/:clubId"). */
+  path?: string
+  url?: string
+}
+
 /** Renderiza uma página numa rota de memória, com os providers do app. */
-export function renderPage(element: ReactElement, { url = '/' }: { url?: string } = {}) {
-  const router = createMemoryRouter([{ path: '/', element }], { initialEntries: [url] })
+export function renderPage(
+  element: ReactElement,
+  { path = '/', url = '/' }: RenderPageOptions = {},
+) {
+  const router = createMemoryRouter(
+    [
+      { path, element },
+      { path: '*', element: null },
+    ],
+    {
+      initialEntries: [url],
+    },
+  )
   render(
     <QueryClientProvider client={createQueryClient()}>
       <TooltipProvider>

@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { NotFoundPage } from '@/app/not-found-page'
+import { paths } from '@/app/paths'
 import type { RouteHandle } from '@/app/route-handle'
 import { AppLayout } from '@/components/layout/app-layout'
 
@@ -22,6 +23,13 @@ export const router = createBrowserRouter([
         handle: handle('Mercado', 'Clubes'),
         lazy: async () => ({
           Component: (await import('@/features/clubs/clubs-page')).ClubsPage,
+        }),
+      },
+      {
+        path: 'clubes/:clubId',
+        handle: { ...handle('Mercado', 'Clube'), parent: { title: 'Clubes', to: paths.clubs } },
+        lazy: async () => ({
+          Component: (await import('@/features/clubs/club-page')).ClubPage,
         }),
       },
       {
