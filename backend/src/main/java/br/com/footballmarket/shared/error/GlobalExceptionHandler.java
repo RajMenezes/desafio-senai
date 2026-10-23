@@ -2,6 +2,7 @@ package br.com.footballmarket.shared.error;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,6 +38,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final PropertyNamingStrategies.NamingBase SNAKE_CASE =
+            (PropertyNamingStrategies.NamingBase) PropertyNamingStrategies.SNAKE_CASE;
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ErrorResponse> handleApi(ApiException ex) {
@@ -49,10 +54,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> handleInvalidBody(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getAllErrors().stream()
-                .map(MessageSourceResolvable::getDefaultMessage)
+                .map(GlobalExceptionHandler::describeValidationError)
                 .findFirst()
                 .orElse("Dados inválidos.");
         return respond(HttpStatus.BAD_REQUEST, message);
+    }
+
+    /**
+     * As mensagens do Bean Validation (ValidationMessages.properties) não citam o campo; aqui ele é
+     * acrescentado com o mesmo nome do JSON: "O campo 'agility' deve estar entre 1 e 100."
+     */
+    private static String describeValidationError(ObjectError error) {
+        if (error instanceof FieldError fieldError) {
+            return "O campo '" + SNAKE_CASE.translate(fieldError.getField()) + "' " + fieldError.getDefaultMessage() + ".";
+        }
+        return error.getDefaultMessage();
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)

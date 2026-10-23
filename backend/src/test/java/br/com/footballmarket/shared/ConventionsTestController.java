@@ -28,11 +28,8 @@ class ConventionsTestController {
     enum Kind { GOL, ATA }
 
     record SampleRequest(
-            @NotNull(message = "O campo 'player_name' é obrigatório.")
-            @Size(max = 10, message = "O campo 'player_name' deve ter no máximo 10 caracteres.")
-            @NormalizedText
-            String playerName,
-            @NotNull(message = "O campo 'agility' é obrigatório.") Integer agility,
+            @NotNull @Size(max = 10) @NormalizedText String playerName,
+            @NotNull Integer agility,
             Long clubId,
             Kind kind,
             Boolean free,
