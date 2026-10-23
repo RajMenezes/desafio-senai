@@ -72,6 +72,14 @@ public class ClubService {
     }
 
     /**
+     * Todos os clubes, sem elenco nem valores (a liga tem no máximo 20).
+     */
+    @Transactional(readOnly = true)
+    public List<Club> findAllClubs() {
+        return repository.findAll();
+    }
+
+    /**
      * Só o clube, sem elenco nem valores.
      */
     @Transactional(readOnly = true)
