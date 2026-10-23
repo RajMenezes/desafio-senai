@@ -5,6 +5,7 @@ import br.com.footballmarket.club.application.SquadContracts;
 import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.club.infra.ClubRepository;
 import br.com.footballmarket.market.application.PurchaseService;
+import br.com.footballmarket.market.application.SaleService;
 import br.com.footballmarket.market.domain.Contract;
 import br.com.footballmarket.market.domain.ContractStatus;
 import br.com.footballmarket.market.domain.MarketTransaction;
@@ -60,7 +61,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * O relógio está no momento do exemplo 2.3.1 (02/11/2026, 10h15).
  */
 @WebMvcTest(MarketController.class)
-@Import({PurchaseService.class, PlayerService.class, ClubService.class, JacksonConfig.class,
+@Import({PurchaseService.class, SaleService.class, PlayerService.class, ClubService.class, JacksonConfig.class,
         MarketControllerTest.PurchaseClock.class})
 class MarketControllerTest {
 

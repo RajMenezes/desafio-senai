@@ -172,6 +172,85 @@ class MarketApiIntegrationTest extends PostgresIntegrationTest {
                 .isEqualTo(12);
     }
 
+    private int sellStatus(int playerId) throws Exception {
+        return mvc.perform(post("/api/v1/players/" + playerId + "/sell")).andReturn().getResponse().getStatus();
+    }
+
+    private void assertCashMatchesTransactions(int club) {
+        // RN17: 300,00 + soma de cash_change = caixa atual
+        assertThat(jdbc.queryForObject(
+                "SELECT 300 + COALESCE(SUM(variacao_caixa), 0) = (SELECT caixa FROM clubes WHERE id = ?) "
+                        + "FROM transacoes WHERE clube_id = ?", Boolean.class, club, club)).isTrue();
+    }
+
+    @Test
+    void sellFreesThePlayerAndBlocksTheRebuyOnlyForTheSeller() throws Exception {
+        int aguias = createClub("Águias FC", "AGU");
+        int bravos = createClub("Bravos FC", "BFC");
+        int player = registerMeiaLua("Meia Lua");
+        assertThat(buyStatus(player, aguias)).isEqualTo(200); // 40,00 + 2,00 de taxa; 120 dias de fidelidade
+
+        // vendido logo depois: 120 dias restantes → 10% de 40,00; sem lucro, sem comissão
+        mvc.perform(post("/api/v1/players/" + player + "/sell"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("VENDA"))
+                .andExpect(jsonPath("$.value").value(40.00))
+                .andExpect(jsonPath("$.penalty").value(4.00))
+                .andExpect(jsonPath("$.profit").value(0.00))
+                .andExpect(jsonPath("$.fee").value(0.00))
+                .andExpect(jsonPath("$.cash_change").value(36.00))
+                .andExpect(jsonPath("$.remaining_days").value(120))
+                .andExpect(jsonPath("$.contract_status").value("RESCINDIDO"))
+                .andExpect(jsonPath("$.club_cash").value(294.00));
+
+        assertThat(jdbc.queryForObject("SELECT clube_id FROM jogadores WHERE id = ?", Integer.class, player)).isNull();
+        Map<String, Object> contract = jdbc.queryForMap("SELECT * FROM contratos WHERE jogador_id = ?", player);
+        assertThat(contract.get("situacao")).isEqualTo("RESCINDIDO");
+        assertThat(contract.get("encerrado_em")).isNotNull();
+        assertThat((BigDecimal) jdbc.queryForObject("SELECT lucro FROM transacoes WHERE tipo = 'VENDA'", BigDecimal.class))
+                .isEqualByComparingTo("0.00");
+        assertCashMatchesTransactions(aguias);
+
+        assertThat(sellStatus(player)).isEqualTo(409);     // agora está livre
+        assertThat(buyStatus(player, aguias)).isEqualTo(409); // o Águias já vendeu este jogador
+        assertThat(buyStatus(player, bravos)).isEqualTo(200); // outro clube pode comprar
+        assertCashMatchesTransactions(bravos);
+        mvc.perform(get("/api/v1/clubs/" + aguias)).andExpect(jsonPath("$.players").isEmpty());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM transacoes", Integer.class)).isEqualTo(3);
+    }
+
+    @Test
+    void fulfilledLoyaltyEndsTheContractWithoutPenalty() throws Exception {
+        int club = createClub("Águias FC", "AGU");
+        int player = registerMeiaLua("Meia Lua");
+        assertThat(buyStatus(player, club)).isEqualTo(200);
+        jdbc.update("UPDATE contratos SET iniciado_em = now() - interval '10 days', "
+                + "fidelidade_ate = now() - interval '1 day' WHERE jogador_id = ?", player);
+
+        mvc.perform(post("/api/v1/players/" + player + "/sell"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.remaining_days").value(0))
+                .andExpect(jsonPath("$.penalty").value(0.00))
+                .andExpect(jsonPath("$.contract_status").value("ENCERRADO"));
+        assertThat(jdbc.queryForObject("SELECT situacao FROM contratos WHERE jogador_id = ?", String.class, player))
+                .isEqualTo("ENCERRADO");
+        assertCashMatchesTransactions(club);
+    }
+
+    @Test
+    void concurrentSalesOfTheSamePlayerLetOnlyOneThrough() throws Exception {
+        int club = createClub("Águias FC", "AGU");
+        int player = registerMeiaLua("Meia Lua");
+        assertThat(buyStatus(player, club)).isEqualTo(200);
+
+        List<Integer> statuses = runTogether(List.of(() -> sellStatus(player), () -> sellStatus(player)));
+
+        assertThat(statuses).containsExactlyInAnyOrder(200, 409);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM transacoes WHERE tipo = 'VENDA'", Integer.class))
+                .isEqualTo(1);
+        assertCashMatchesTransactions(club);
+    }
+
     private static List<Integer> runTogether(List<Callable<Integer>> tasks) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
         try {

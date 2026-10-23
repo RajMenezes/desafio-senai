@@ -80,6 +80,25 @@ public class MarketTransaction {
         return transaction;
     }
 
+    /**
+     * Venda: {@code fee} é a comissão; o caixa varia em valor − multa − comissão.
+     */
+    public static MarketTransaction sale(Integer clubId, Integer playerId, String playerName, Money value,
+                                         Money commission, Money penalty, Money profit, OffsetDateTime now) {
+        MarketTransaction transaction = new MarketTransaction();
+        transaction.clubId = clubId;
+        transaction.playerId = playerId;
+        transaction.playerName = playerName;
+        transaction.type = TransactionType.VENDA;
+        transaction.value = value;
+        transaction.fee = commission;
+        transaction.penalty = penalty;
+        transaction.profit = profit;
+        transaction.cashChange = value.minus(penalty).minus(commission);
+        transaction.createdAt = now;
+        return transaction;
+    }
+
     public Integer getId() {
         return id;
     }

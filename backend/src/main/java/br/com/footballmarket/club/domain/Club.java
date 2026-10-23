@@ -84,6 +84,13 @@ public class Club {
         this.cash = newCash;
     }
 
+    /**
+     * Crédito de uma venda: valor de mercado − multa − comissão (RN16).
+     */
+    public void credit(Money amount) {
+        this.cash = cash.plus(amount);
+    }
+
     public Integer getId() {
         return id;
     }

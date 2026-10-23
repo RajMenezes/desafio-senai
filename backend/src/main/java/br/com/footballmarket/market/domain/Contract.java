@@ -64,6 +64,17 @@ public class Contract {
         return contract;
     }
 
+    /**
+     * Venda (RN15): com multa o contrato é RESCINDIDO; sem multa (fidelidade cumprida), ENCERRADO.
+     */
+    public void close(Money penalty, OffsetDateTime now) {
+        if (status != ContractStatus.ATIVO) {
+            throw new IllegalStateException("Contrato " + id + " não está ativo: " + status);
+        }
+        this.status = penalty.isPositive() ? ContractStatus.RESCINDIDO : ContractStatus.ENCERRADO;
+        this.endedAt = now;
+    }
+
     public long remainingDays(OffsetDateTime now) {
         return Loyalty.remainingDays(loyaltyUntil, now);
     }

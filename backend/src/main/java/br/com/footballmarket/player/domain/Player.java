@@ -167,6 +167,21 @@ public class Player {
         this.updatedAt = now;
     }
 
+    /**
+     * Venda (RN16): o jogador volta a ficar livre. Jogador livre não pode ser vendido (409).
+     */
+    public void leaveClub(OffsetDateTime now) {
+        requireInClub();
+        this.clubId = null;
+        this.updatedAt = now;
+    }
+
+    public void requireInClub() {
+        if (!hasClub()) {
+            throw new BusinessRuleException("Jogador livre não pode ser vendido: ele não pertence a nenhum clube.");
+        }
+    }
+
     public void requireFree() {
         if (hasClub()) {
             throw new BusinessRuleException("O jogador não está livre: já pertence a um clube.");
