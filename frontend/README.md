@@ -5,7 +5,10 @@ Interface do sistema de gestão da liga, feita com React, TypeScript e Vite.
 ## Stack
 
 - React 19 + TypeScript, projeto criado com Vite
-- Tailwind CSS 4
+- Tailwind CSS 4 + [shadcn/ui](https://ui.shadcn.com) (componentes em `src/components/ui`) e ícones Lucide
+- React Router (modo biblioteca) para as rotas
+- TanStack Query para as chamadas à API
+- React Hook Form + Zod para os formulários
 - Vitest + Testing Library (testes de componente)
 - ESLint + Prettier (lint e formatação)
 
@@ -47,3 +50,16 @@ Interface em http://localhost:5173.
 | `npm run lint`         | Verifica o código com o ESLint                         |
 | `npm run format:check` | Verifica a formatação com o Prettier, sem alterar      |
 | `npm run format`       | Formata os arquivos com o Prettier                     |
+
+## Organização
+
+```
+src/
+  app/            rotas, providers e páginas gerais
+  components/
+    common/       componentes compartilhados (cabeçalho de página, estados de lista, confirmação)
+    layout/       menu lateral e cabeçalho
+    ui/           componentes do shadcn/ui
+  features/       uma pasta por área do sistema (jogadores, clubes, liga)
+  lib/            cliente da API, formatação de valores e datas, notificações
+```
