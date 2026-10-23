@@ -2,6 +2,8 @@ package br.com.footballmarket.shared.text;
 
 import br.com.footballmarket.shared.error.BadRequestException;
 
+import java.text.Normalizer;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -12,6 +14,7 @@ public final class
 TextNormalizer {
 
     private static final Pattern REPEATED_SPACES = Pattern.compile("\\s{2,}");
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
 
     private TextNormalizer() {
     }
@@ -29,5 +32,14 @@ TextNormalizer {
         }
         String normalized = REPEATED_SPACES.matcher(raw.strip()).replaceAll(" ");
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    /**
+     * Forma usada para comparar textos sem diferenciar maiúsculas, minúsculas e acentos (RN07):
+     * {@code "João"} e {@code "JOAO"} viram {@code "joao"}.
+     */
+    public static String fold(String text) {
+        String decomposed = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return COMBINING_MARKS.matcher(decomposed).replaceAll("").toLowerCase(Locale.ROOT);
     }
 }

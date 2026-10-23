@@ -3,6 +3,7 @@ package br.com.footballmarket.player.api;
 import br.com.footballmarket.player.application.PlayerService;
 import br.com.footballmarket.player.domain.Condition;
 import br.com.footballmarket.player.domain.Player;
+import br.com.footballmarket.player.domain.Position;
 import br.com.footballmarket.player.infra.PlayerRepository;
 import br.com.footballmarket.shared.config.JacksonConfig;
 import org.junit.jupiter.api.Test;
@@ -13,21 +14,27 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static br.com.footballmarket.player.domain.PlayerFixtures.NOW;
 import static br.com.footballmarket.player.domain.PlayerFixtures.inClub;
 import static br.com.footballmarket.player.domain.PlayerFixtures.meiaLua;
+import static br.com.footballmarket.player.domain.PlayerFixtures.player;
+import static br.com.footballmarket.player.domain.PlayerFixtures.withCondition;
 import static br.com.footballmarket.player.domain.PlayerFixtures.withId;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -223,5 +230,109 @@ class PlayerControllerTest {
         givenStored(withId(inClub(meiaLua(), 1), 9));
 
         mvc.perform(delete("/api/v1/players/9")).andExpect(status().isConflict());
+    }
+
+    // ---- GET /players: os filtros de banco são simulados; aqui se confere o que é feito em memória ----
+
+    @SuppressWarnings("unchecked")
+    private void givenListed(Player... players) {
+        when(repository.findAll(any(Specification.class))).thenReturn(List.of(players));
+    }
+
+    @Test
+    void listReturnsDataAndMetaWithTheDetailFields() throws Exception {
+        givenListed(withId(withCondition(meiaLua(), Condition.MAL_CONDICIONADO), 2));
+
+        mvc.perform(get("/api/v1/players").param("search", "lua").param("position", "MEI")
+                        .param("sort", "value_desc").param("page", "1").param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {"data": [{"id": 2, "name": "Meia Lua", "position": "MEI", "agility": 85, "age": 25,
+                                   "condition": "MAL_CONDICIONADO", "base_value": 40.00, "market_value": 37.00,
+                                   "pace": 70, "shooting": 68, "passing": 82, "dribbling": 79, "defending": 55,
+                                   "physical": 64, "potential": 86, "overall": 75, "club_id": null}],
+                         "meta": {"page": 1, "limit": 10, "total_items": 1, "total_pages": 1}}
+                        """, true));
+    }
+
+    @Test
+    void searchIgnoresCaseAndAccents() throws Exception {
+        givenListed(withId(player("João Silva", Position.ATA, 25), 1),
+                withId(player("Meia Lua", Position.MEI, 25), 2),
+                withId(player("Joana Prado", Position.ZAG, 25), 3));
+
+        mvc.perform(get("/api/v1/players").param("search", "joao"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("João Silva")));
+        mvc.perform(get("/api/v1/players").param("search", "LUA"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("Meia Lua")));
+        mvc.perform(get("/api/v1/players").param("search", "  JO  "))
+                .andExpect(jsonPath("$.meta.total_items").value(2));
+    }
+
+    @Test
+    void valueRangeUsesMarketValueInclusively() throws Exception {
+        givenListed(withId(meiaLua(), 1),                                                  // 40,00
+                withId(withCondition(player("Bia Mal", Position.MEI, 25), Condition.MAL_CONDICIONADO), 2), // 34,00
+                withId(withCondition(player("Caio Doente", Position.MEI, 25), Condition.DOENTE), 3));      // 28,00
+
+        mvc.perform(get("/api/v1/players").param("min_value", "34").param("max_value", "39.99"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("Bia Mal")));
+        mvc.perform(get("/api/v1/players").param("max_value", "34"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("Bia Mal", "Caio Doente")));
+        mvc.perform(get("/api/v1/players").param("min_value", "40").param("sort", "value_asc"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("Meia Lua")));
+    }
+
+    @Test
+    void paginationHappensAfterSortingAndCountsEveryMatch() throws Exception {
+        givenListed(withId(player("Carla Reis", Position.MEI, 25), 1),
+                withId(player("Ana Lima", Position.MEI, 25), 2),
+                withId(player("Bruno Dias", Position.MEI, 25), 3));
+
+        mvc.perform(get("/api/v1/players").param("limit", "2").param("page", "2"))
+                .andExpect(jsonPath("$.data[*].name").value(contains("Carla Reis")))
+                .andExpect(jsonPath("$.meta.total_items").value(3))
+                .andExpect(jsonPath("$.meta.total_pages").value(2));
+        mvc.perform(get("/api/v1/players").param("limit", "2").param("page", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.meta.page").value(3))
+                .andExpect(jsonPath("$.meta.total_pages").value(2));
+    }
+
+    @Test
+    void emptyResultHasZeroPages() throws Exception {
+        givenListed();
+
+        mvc.perform(get("/api/v1/players").param("unknown_param", "x"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {"data": [], "meta": {"page": 1, "limit": 10, "total_items": 0, "total_pages": 0}}
+                        """, true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "position=mei", "position=", "condition=apto", "free=TRUE", "free=", "club_id=0", "club_id=01",
+            "min_age=15", "max_age=46", "min_age=30&max_age=20", "min_age=+20", "min_value=1.555", "min_value=-1",
+            "min_value=1e2", "min_value=10,5", "min_value=01", "max_value=550.01", "min_value=50&max_value=40",
+            "free=true&club_id=1", "sort=POSITION", "sort=", "sort=value_asc,value_desc", "sort=name,%20age_asc",
+            "page=0", "page=", "page=1.0", "limit=51", "limit=0", "search=", "search=a", "search=%20%20"
+    })
+    void listRejectsInvalidParams(String queryString) throws Exception {
+        givenListed();
+
+        mvc.perform(get(URI.create("/api/v1/players?" + queryString)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void freeFalseWithClubIsAccepted() throws Exception {
+        givenListed(withId(inClub(meiaLua(), 1), 2));
+
+        mvc.perform(get("/api/v1/players").param("free", "false").param("club_id", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].club_id").value(1));
     }
 }

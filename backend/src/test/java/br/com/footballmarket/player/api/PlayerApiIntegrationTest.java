@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -76,5 +77,50 @@ class PlayerApiIntegrationTest extends PostgresIntegrationTest {
         mvc.perform(delete("/api/v1/players/" + id)).andExpect(status().isNotFound());
         assertThat(jdbc.queryForObject("SELECT excluido_em IS NOT NULL FROM jogadores WHERE id = ?", Boolean.class, id))
                 .isTrue();
+    }
+
+    private int register(String name, String position, int age) throws Exception {
+        String body = """
+                {"name": "%s", "position": "%s", "agility": 70, "age": %d,
+                 "pace": 70, "shooting": 68, "passing": 82, "dribbling": 79, "defending": 55,
+                 "physical": 64, "potential": 86}
+                """.formatted(name, position, age);
+        String created = mvc.perform(post("/api/v1/players").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return JsonPath.read(created, "$.id");
+    }
+
+    @Test
+    void listingFiltersInTheDatabase() throws Exception {
+        int ana = register("Ana Goleira", "GOL", 20);
+        int bia = register("Bia Zagueira", "ZAG", 28);
+        int caio = register("Caio Atacante", "ATA", 30);
+        int duda = register("Duda Excluída", "ATA", 30);
+        mvc.perform(delete("/api/v1/players/" + duda)).andExpect(status().isNoContent());
+        // Enquanto a compra (Etapa 5) não existe, o vínculo com o clube é feito direto no banco.
+        jdbc.update("UPDATE jogadores SET clube_id = 1 WHERE id = ?", bia);
+        mvc.perform(patch("/api/v1/players/" + caio + "/condition").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"condition\": \"DOENTE\"}")).andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/players"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(ana, bia, caio)))
+                .andExpect(jsonPath("$.meta.total_items").value(3));
+        mvc.perform(get("/api/v1/players").param("position", "ZAG"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
+        mvc.perform(get("/api/v1/players").param("condition", "DOENTE"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(caio)));
+        mvc.perform(get("/api/v1/players").param("free", "true"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(ana, caio)));
+        mvc.perform(get("/api/v1/players").param("free", "false"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
+        mvc.perform(get("/api/v1/players").param("club_id", "1"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
+        mvc.perform(get("/api/v1/players").param("min_age", "28").param("max_age", "29"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
+        mvc.perform(get("/api/v1/players").param("min_age", "28").param("sort", "age_desc"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(caio, bia)));
+        mvc.perform(get("/api/v1/players").param("search", "ATA").param("free", "true"))
+                .andExpect(jsonPath("$.data[*].id").value(contains(caio)));
     }
 }

@@ -27,6 +27,13 @@ class TextNormalizerTest {
         assertThat(TextNormalizer.normalize(null)).isNull();
     }
 
+    @Test
+    void foldIgnoresCaseAndAccents() {
+        assertThat(TextNormalizer.fold("João Silva")).isEqualTo("joao silva");
+        assertThat(TextNormalizer.fold("ÁÉÍÕÜÇ")).isEqualTo("aeiouc");
+        assertThat(TextNormalizer.fold("Meia Lua")).contains(TextNormalizer.fold("LUA"));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"Meia\tZeta", "Meia\nZeta", "Meia\rZeta", "Meia\u0000Zeta", "Meia\u007FZeta"})
     void rejectsControlCharacters(String raw) {

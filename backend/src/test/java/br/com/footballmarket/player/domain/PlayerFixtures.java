@@ -20,6 +20,18 @@ public final class PlayerFixtures {
         return Player.register("Meia Lua", Position.MEI, 85, 25, MEIA_LUA_ATTRIBUTES, 86, NOW);
     }
 
+    /**
+     * Jogador com os atributos do Meia Lua; o potencial respeita a regra dos 33 anos ou mais.
+     */
+    public static Player player(String name, Position position, int age) {
+        return Player.register(name, position, 70, age, MEIA_LUA_ATTRIBUTES, age >= 33 ? 82 : 86, NOW);
+    }
+
+    public static Player withCondition(Player player, Condition condition) {
+        player.changeCondition(condition, NOW);
+        return player;
+    }
+
     public static Player withId(Player player, int id) {
         ReflectionTestUtils.setField(player, "id", id);
         return player;
