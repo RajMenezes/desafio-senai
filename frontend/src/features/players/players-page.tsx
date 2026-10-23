@@ -1,9 +1,11 @@
-import { Users } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { Plus, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/common/page-header'
+import { Button } from '@/components/ui/button'
 import { useClubs } from '@/features/clubs/api'
 import { usePlayers } from './api'
 import { ActiveFilters } from './components/active-filters'
+import { PlayerDialogs, type PlayerDialogState } from './components/player-dialogs'
 import { PlayerSortMenu } from './components/player-sort-menu'
 import { PlayerTabs } from './components/player-tabs'
 import { PlayersList } from './components/players-list'
@@ -17,6 +19,8 @@ export function PlayersPage() {
   const clubsQuery = useClubs()
   const playersQuery = usePlayers(toPlayersQuery(filters))
   const counts = usePlayerTabCounts(filters)
+  const [dialog, setDialog] = useState<PlayerDialogState | null>(null)
+  const openCreateDialog = () => setDialog({ kind: 'create' })
 
   const clubs = useMemo(() => clubsQuery.data ?? [], [clubsQuery.data])
   const clubsById = useMemo(() => new Map(clubs.map((club) => [club.id, club])), [clubs])
@@ -35,6 +39,12 @@ export function PlayersPage() {
         icon={Users}
         title="Jogadores"
         description="Cadastre jogadores, acompanhe os indicadores e compre os que estão livres."
+        actions={
+          <Button onClick={openCreateDialog}>
+            <Plus data-icon="inline-start" aria-hidden />
+            Novo jogador
+          </Button>
+        }
       />
       <PlayersToolbar filters={filters} clubs={clubs} onChange={updateFilters} />
       <ActiveFilters
@@ -59,8 +69,11 @@ export function PlayersPage() {
           clubsById={clubsById}
           onPageChange={(page) => updateFilters({ page })}
           onClearFilters={clearFilters}
+          onCreatePlayer={openCreateDialog}
+          onAction={(kind, player) => setDialog({ kind, player })}
         />
       </section>
+      <PlayerDialogs state={dialog} clubsById={clubsById} onChange={setDialog} />
     </>
   )
 }

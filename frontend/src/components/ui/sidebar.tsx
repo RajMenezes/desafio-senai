@@ -186,8 +186,8 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>Navegação principal do sistema.</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -258,7 +258,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">Mostrar ou esconder o menu</span>
     </Button>
   )
 }

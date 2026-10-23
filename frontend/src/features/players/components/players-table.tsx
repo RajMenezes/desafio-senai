@@ -13,6 +13,7 @@ import type { Club } from '@/features/clubs/types'
 import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { POSITION_LABELS, type Player } from '../types'
+import { PlayerActionsMenu, type PlayerAction } from './player-actions-menu'
 import { AgilityBar, ConditionBadge, PlayerAvatar, PositionBadge } from './player-cells'
 
 const COLUMNS = [
@@ -25,6 +26,7 @@ const COLUMNS = [
   { label: 'Valor base', numeric: true },
   { label: 'Valor de mercado', numeric: true },
   { label: 'Clube' },
+  { label: 'Ações', hidden: true },
 ]
 
 function ClubCell({ clubId, clubsById }: { clubId: number | null; clubsById: Map<number, Club> }) {
@@ -45,6 +47,7 @@ function ClubCell({ clubId, clubsById }: { clubId: number | null; clubsById: Map
 interface PlayersTableProps {
   players: Player[]
   clubsById: Map<number, Club>
+  onAction: (action: PlayerAction, player: Player) => void
   loading?: boolean
   stale?: boolean
 }
@@ -52,6 +55,7 @@ interface PlayersTableProps {
 export function PlayersTable({
   players,
   clubsById,
+  onAction,
   loading = false,
   stale = false,
 }: PlayersTableProps) {
@@ -60,8 +64,8 @@ export function PlayersTable({
       <TableHeader className="bg-muted-subtle">
         <TableRow>
           {COLUMNS.map((column) => (
-            <TableHead key={column.label} className={cn('px-4', column.numeric && 'text-right')}>
-              {column.label}
+            <TableHead key={column.label} className={cn('px-3', column.numeric && 'text-right')}>
+              {column.hidden ? <span className="sr-only">{column.label}</span> : column.label}
             </TableHead>
           ))}
         </TableRow>
@@ -72,7 +76,7 @@ export function PlayersTable({
         <TableBody className={cn('transition-opacity', stale && 'opacity-60')}>
           {players.map((player) => (
             <TableRow key={player.id}>
-              <TableCell className="px-4">
+              <TableCell className="px-3">
                 <div className="flex items-center gap-3">
                   <PlayerAvatar id={player.id} name={player.name} />
                   <div className="leading-tight">
@@ -83,27 +87,30 @@ export function PlayersTable({
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="px-4">
+              <TableCell className="px-3">
                 <PositionBadge position={player.position} />
               </TableCell>
-              <TableCell className="px-4 text-right font-semibold tabular-nums">
+              <TableCell className="px-3 text-right font-semibold tabular-nums">
                 {player.overall}
               </TableCell>
-              <TableCell className="px-4">
+              <TableCell className="px-3">
                 <AgilityBar agility={player.agility} />
               </TableCell>
-              <TableCell className="px-4 text-right tabular-nums">{player.age}</TableCell>
-              <TableCell className="px-4">
+              <TableCell className="px-3 text-right tabular-nums">{player.age}</TableCell>
+              <TableCell className="px-3">
                 <ConditionBadge condition={player.condition} />
               </TableCell>
-              <TableCell className="px-4 text-right text-muted-foreground tabular-nums">
+              <TableCell className="px-3 text-right text-muted-foreground tabular-nums">
                 {formatMoney(player.base_value)}
               </TableCell>
-              <TableCell className="px-4 text-right font-semibold tabular-nums">
+              <TableCell className="px-3 text-right font-semibold tabular-nums">
                 {formatMoney(player.market_value)}
               </TableCell>
-              <TableCell className="px-4">
+              <TableCell className="px-3">
                 <ClubCell clubId={player.club_id} clubsById={clubsById} />
+              </TableCell>
+              <TableCell className="px-3 text-right">
+                <PlayerActionsMenu player={player} onAction={onAction} />
               </TableCell>
             </TableRow>
           ))}

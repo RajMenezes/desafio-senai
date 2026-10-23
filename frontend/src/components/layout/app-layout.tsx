@@ -7,7 +7,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <AppHeader />
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
           <Outlet />

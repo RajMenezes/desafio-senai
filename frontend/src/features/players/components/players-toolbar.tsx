@@ -6,12 +6,12 @@ import { SelectFilter } from '@/components/common/select-filter'
 import type { Club } from '@/features/clubs/types'
 import { formatMoney } from '@/lib/format'
 import {
-  AGE_LIMITS,
   FREE_WITH_CLUB_REASON,
   MARKET_VALUE_LIMITS,
   SEARCH_MIN_LENGTH,
   type PlayerFilters,
 } from '../player-filters'
+import { AGE_LIMITS } from '../player-schemas'
 import { CONDITION_LABELS, CONDITIONS, POSITION_LABELS, POSITIONS } from '../types'
 
 const POSITION_OPTIONS = POSITIONS.map((position) => ({

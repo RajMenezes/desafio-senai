@@ -4,7 +4,6 @@ import { CONDITIONS, POSITIONS, type Condition, type Position } from './types'
 
 export const PLAYERS_PAGE_SIZE = 10
 
-export const AGE_LIMITS = { min: 16, max: 45 } as const
 export const MARKET_VALUE_LIMITS = { min: 0, max: 550 } as const
 export const SEARCH_MIN_LENGTH = 2
 
