@@ -10,6 +10,7 @@ import br.com.footballmarket.market.domain.TransactionType;
 import br.com.footballmarket.market.infra.TransactionRepository;
 import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
+import br.com.footballmarket.player.application.StarterRemoval;
 import br.com.footballmarket.player.domain.PlayerFixtures;
 import br.com.footballmarket.player.infra.PlayerRepository;
 import br.com.footballmarket.shared.config.JacksonConfig;
@@ -73,6 +74,9 @@ class TransactionControllerTest {
 
     @MockitoBean
     private ClubDirectory clubDirectory;
+
+    @MockitoBean
+    private StarterRemoval starterRemoval;
 
     @MockitoBean
     private SquadContracts squadContracts;

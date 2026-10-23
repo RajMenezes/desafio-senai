@@ -3,6 +3,7 @@ package br.com.footballmarket.player.api;
 import br.com.footballmarket.FixedClockConfig;
 import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
+import br.com.footballmarket.player.application.StarterRemoval;
 import br.com.footballmarket.player.domain.Condition;
 import br.com.footballmarket.player.domain.Player;
 import br.com.footballmarket.player.domain.Position;
@@ -69,6 +70,9 @@ class PlayerControllerTest {
 
     @MockitoBean
     private ClubDirectory clubs;
+
+    @MockitoBean
+    private StarterRemoval starterRemoval;
 
     private ResultActions send(MockHttpServletRequestBuilder request,
                                String body) throws Exception {
@@ -196,6 +200,18 @@ class PlayerControllerTest {
         givenStored(withId(meiaLua(), 2));
 
         send(patch("/api/v1/players/2/condition"), body).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void sickStarterLeavesTheLineup() throws Exception {
+        givenStored(withId(inClub(meiaLua(), 1), 2));
+
+        send(patch("/api/v1/players/2/condition"), "{\"condition\": \"MAL_CONDICIONADO\"}").andExpect(status().isOk());
+        verify(clubs, never()).exists(any());
+        verify(starterRemoval, never()).removeStarter(any());
+
+        send(patch("/api/v1/players/2/condition"), "{\"condition\": \"DOENTE\"}").andExpect(status().isOk());
+        verify(starterRemoval).removeStarter(2);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package br.com.footballmarket.market.application;
 
 import br.com.footballmarket.club.application.ClubService;
+import br.com.footballmarket.club.application.LineupService;
 import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.market.domain.Contract;
 import br.com.footballmarket.market.domain.ContractStatus;
@@ -29,14 +30,16 @@ public class SaleService {
     private final ClubService clubs;
     private final ContractRepository contracts;
     private final TransactionRepository transactions;
+    private final LineupService lineups;
     private final Clock clock;
 
     public SaleService(PlayerService players, ClubService clubs, ContractRepository contracts,
-                       TransactionRepository transactions, Clock clock) {
+                       TransactionRepository transactions, LineupService lineups, Clock clock) {
         this.players = players;
         this.clubs = clubs;
         this.contracts = contracts;
         this.transactions = transactions;
+        this.lineups = lineups;
         this.clock = clock;
     }
 
@@ -63,7 +66,7 @@ public class SaleService {
         club.credit(transaction.getCashChange());
         player.leaveClub(now);
         contract.close(penalty, now);
-        // Etapa 8: titular vendido sai da escalação (RN19)
+        lineups.removeStarter(player.getId()); // RN19: titular vendido sai da escalação, na mesma operação
         return new SaleResult(transactions.save(transaction), contract, remainingDays, penaltyRate, club.getCash());
     }
 }

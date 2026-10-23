@@ -8,6 +8,7 @@ import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.club.infra.ClubRepository;
 import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
+import br.com.footballmarket.player.application.StarterRemoval;
 import br.com.footballmarket.player.domain.Condition;
 import br.com.footballmarket.player.domain.Player;
 import br.com.footballmarket.player.domain.PlayerFixtures;
@@ -71,6 +72,9 @@ class ClubControllerTest {
 
     @MockitoBean
     private ClubDirectory clubDirectory;
+
+    @MockitoBean
+    private StarterRemoval starterRemoval;
 
     @MockitoBean
     private SquadContracts squadContracts;

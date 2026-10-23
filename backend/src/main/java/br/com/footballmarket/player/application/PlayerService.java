@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,11 +28,13 @@ public class PlayerService {
 
     private final PlayerRepository repository;
     private final ClubDirectory clubs;
+    private final StarterRemoval starters;
     private final Clock clock;
 
-    public PlayerService(PlayerRepository repository, ClubDirectory clubs, Clock clock) {
+    public PlayerService(PlayerRepository repository, ClubDirectory clubs, StarterRemoval starters, Clock clock) {
         this.repository = repository;
         this.clubs = clubs;
+        this.starters = starters;
         this.clock = clock;
     }
 
@@ -54,6 +57,22 @@ public class PlayerService {
     public Player findForUpdate(Integer id) {
         return repository.findActiveForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Jogador não encontrado."));
+    }
+
+    /**
+     * Trava vários jogadores, sempre em ordem crescente de id, para que duas operações que travam
+     * os mesmos jogadores não fiquem esperando uma pela outra.
+     */
+    public List<Player> findAllForUpdate(Collection<Integer> ids) {
+        return ids.stream().sorted().map(this::findForUpdate).toList();
+    }
+
+    /**
+     * Jogadores não excluídos com esses ids; os que não existem ficam de fora.
+     */
+    @Transactional(readOnly = true)
+    public List<Player> findAllById(Collection<Integer> ids) {
+        return repository.findAllById(ids).stream().filter(player -> player.getDeletedAt() == null).toList();
     }
 
     @Transactional(readOnly = true)
@@ -109,7 +128,10 @@ public class PlayerService {
     public Player changeCondition(Integer id, Condition condition) {
         Player player = findForUpdate(id);
         player.changeCondition(condition, now());
-        // Etapa 8: titular que passa a DOENTE sai da escalação (RN19)
+        if (player.getCondition() == Condition.DOENTE) {
+            // RN19: titular que passa a DOENTE sai da escalação, na mesma operação
+            starters.removeStarter(player.getId());
+        }
         return player;
     }
 

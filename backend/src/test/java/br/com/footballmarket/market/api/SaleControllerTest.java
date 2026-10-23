@@ -2,6 +2,7 @@ package br.com.footballmarket.market.api;
 
 import br.com.footballmarket.FixedClockConfig;
 import br.com.footballmarket.club.application.ClubService;
+import br.com.footballmarket.club.application.LineupService;
 import br.com.footballmarket.club.application.SquadContracts;
 import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.club.infra.ClubRepository;
@@ -14,6 +15,7 @@ import br.com.footballmarket.market.infra.ContractRepository;
 import br.com.footballmarket.market.infra.TransactionRepository;
 import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
+import br.com.footballmarket.player.application.StarterRemoval;
 import br.com.footballmarket.player.domain.Player;
 import br.com.footballmarket.player.domain.PlayerFixtures;
 import br.com.footballmarket.player.infra.PlayerRepository;
@@ -77,6 +79,12 @@ class SaleControllerTest {
     private TransactionRepository transactionRepository;
 
     @MockitoBean
+    private StarterRemoval starterRemoval;
+
+    @MockitoBean
+    private LineupService lineupService;
+
+    @MockitoBean
     private ClubDirectory clubDirectory;
 
     @MockitoBean
@@ -119,6 +127,7 @@ class SaleControllerTest {
         assertThat(meiaLua.getUpdatedAt()).isEqualTo(NOW);
         assertThat(contract.getStatus()).isEqualTo(ContractStatus.RESCINDIDO);
         assertThat(contract.getEndedAt()).isEqualTo(NOW);
+        verify(lineupService).removeStarter(2);
     }
 
     @Test
@@ -161,6 +170,7 @@ class SaleControllerTest {
                 .andExpect(jsonPath("$.message").isNotEmpty());
         verify(transactionRepository, never()).save(any());
         assertThat(aguias.getCash()).isEqualTo(Money.of("261.15"));
+        verify(lineupService, never()).removeStarter(any());
     }
 
     @Test

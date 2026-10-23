@@ -71,6 +71,14 @@ public class ClubService {
         return new ClubDetail(ValuedClub.of(club, players.squad(club.getId())), contracts.activeByPlayer(club.getId()));
     }
 
+    /**
+     * Só o clube, sem elenco nem valores.
+     */
+    @Transactional(readOnly = true)
+    public Club findClub(Integer id) {
+        return repository.findById(id).orElseThrow(ClubService::notFound);
+    }
+
     @Transactional(readOnly = true)
     public void requireExists(Integer id) {
         if (!repository.existsById(id)) {

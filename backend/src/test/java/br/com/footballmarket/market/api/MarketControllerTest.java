@@ -1,6 +1,7 @@
 package br.com.footballmarket.market.api;
 
 import br.com.footballmarket.club.application.ClubService;
+import br.com.footballmarket.club.application.LineupService;
 import br.com.footballmarket.club.application.SquadContracts;
 import br.com.footballmarket.club.domain.Club;
 import br.com.footballmarket.club.infra.ClubRepository;
@@ -14,6 +15,7 @@ import br.com.footballmarket.market.infra.ContractRepository;
 import br.com.footballmarket.market.infra.TransactionRepository;
 import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
+import br.com.footballmarket.player.application.StarterRemoval;
 import br.com.footballmarket.player.domain.Condition;
 import br.com.footballmarket.player.domain.Player;
 import br.com.footballmarket.player.domain.PlayerFixtures;
@@ -90,6 +92,12 @@ class MarketControllerTest {
 
     @MockitoBean
     private TransactionRepository transactionRepository;
+
+    @MockitoBean
+    private StarterRemoval starterRemoval;
+
+    @MockitoBean
+    private LineupService lineupService;
 
     @MockitoBean
     private ClubDirectory clubDirectory;

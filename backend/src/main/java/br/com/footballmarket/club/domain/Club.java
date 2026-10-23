@@ -2,6 +2,7 @@ package br.com.footballmarket.club.domain;
 
 import br.com.footballmarket.shared.money.Money;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +40,13 @@ public class Club {
 
     @Column(name = "caixa", nullable = false, precision = 10, scale = 2)
     private Money cash;
+
+    /**
+     * Formação da escalação (RN19); nula enquanto o clube não escalou. Continua a mesma quando um titular sai.
+     */
+    @Convert(converter = FormationConverter.class)
+    @Column(name = "formacao", length = 5)
+    private Formation formation;
 
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -89,6 +97,14 @@ public class Club {
      */
     public void credit(Money amount) {
         this.cash = cash.plus(amount);
+    }
+
+    public void changeFormation(Formation formation) {
+        this.formation = formation;
+    }
+
+    public Formation getFormation() {
+        return formation;
     }
 
     public Integer getId() {
