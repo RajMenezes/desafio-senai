@@ -37,7 +37,7 @@ class PlayerSortTest {
     }
 
     @Test
-    void nameOrderFollowsPortugueseAlphabet() {
+    void nameOrderIgnoresCaseAndAccents() {
         assertThat(sortedNames(PlayerSort.DEFAULT,
                 withId(player("Bruno Dias", Position.MEI, 25), 1),
                 withId(player("Zé Roberto", Position.MEI, 25), 2),
@@ -53,6 +53,25 @@ class PlayerSortTest {
 
         assertThat(Stream.of(second, first).sorted(PlayerSort.ordering(PlayerSort.DEFAULT)).map(Player::getId))
                 .containsExactly(3, 7);
+    }
+
+    @Test
+    void namesEqualAfterFoldingAreBrokenByIdNotByAccent() {
+        Player accented = withId(player("Júlio Reis", Position.MEI, 25), 2);
+        Player plain = withId(player("julio reis", Position.MEI, 25), 5);
+
+        assertThat(Stream.of(plain, accented).sorted(PlayerSort.ordering(PlayerSort.DEFAULT)).map(Player::getId))
+                .containsExactly(2, 5);
+    }
+
+    @Test
+    void squadOrderIsPositionThenNameThenId() {
+        assertThat(Stream.of(
+                        withId(player("Ana Ata", Position.ATA, 25), 1),
+                        withId(player("Zeca Gol", Position.GOL, 25), 2),
+                        withId(player("Bia Gol", Position.GOL, 25), 3))
+                .sorted(PlayerSort.squadOrdering()).map(Player::getName))
+                .containsExactly("Bia Gol", "Zeca Gol", "Ana Ata");
     }
 
     @Test

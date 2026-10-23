@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Casos de uso do cadastro de jogadores. As regras ficam na entidade {@link Player};
@@ -24,10 +26,12 @@ import java.util.List;
 public class PlayerService {
 
     private final PlayerRepository repository;
+    private final ClubDirectory clubs;
     private final Clock clock;
 
-    public PlayerService(PlayerRepository repository, Clock clock) {
+    public PlayerService(PlayerRepository repository, ClubDirectory clubs, Clock clock) {
         this.repository = repository;
+        this.clubs = clubs;
         this.clock = clock;
     }
 
@@ -49,7 +53,9 @@ public class PlayerService {
      */
     @Transactional(readOnly = true)
     public PageResult<Player> list(PlayerQuery query) {
-        // Etapa 4: club_id de clube inexistente → 404
+        if (query.clubId() != null && !clubs.exists(query.clubId())) {
+            throw new NotFoundException("Clube não encontrado.");
+        }
         String search = query.search() == null ? null : TextNormalizer.fold(query.search());
         List<Player> matching = repository.findAll(PlayerSpecifications.matching(query)).stream()
                 .filter(player -> search == null || TextNormalizer.fold(player.getName()).contains(search))
@@ -57,6 +63,22 @@ public class PlayerService {
                 .sorted(PlayerSort.ordering(query.sort()))
                 .toList();
         return PageResult.slice(matching, query.page(), query.limit());
+    }
+
+    /**
+     * Elenco do clube na ordem da RN11 (posição, nome e id).
+     */
+    @Transactional(readOnly = true)
+    public List<Player> squad(Integer clubId) {
+        return repository.findByClubId(clubId).stream().sorted(PlayerSort.squadOrdering()).toList();
+    }
+
+    /**
+     * Elencos de todos os clubes de uma vez, para a listagem de clubes não fazer uma consulta por clube.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, List<Player>> squadsByClub() {
+        return repository.findByClubIdIsNotNull().stream().collect(Collectors.groupingBy(Player::getClubId));
     }
 
     private static boolean withinValueRange(Money marketValue, PlayerQuery query) {

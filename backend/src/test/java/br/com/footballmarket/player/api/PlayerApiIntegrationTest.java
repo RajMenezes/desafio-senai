@@ -35,7 +35,7 @@ class PlayerApiIntegrationTest extends PostgresIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.execute("TRUNCATE jogadores RESTART IDENTITY CASCADE");
+        jdbc.execute("TRUNCATE jogadores, clubes RESTART IDENTITY CASCADE");
     }
 
     @Test
@@ -98,8 +98,13 @@ class PlayerApiIntegrationTest extends PostgresIntegrationTest {
         int caio = register("Caio Atacante", "ATA", 30);
         int duda = register("Duda Excluída", "ATA", 30);
         mvc.perform(delete("/api/v1/players/" + duda)).andExpect(status().isNoContent());
+        String club = mvc.perform(post("/api/v1/clubs").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Águias FC\", \"acronym\": \"AGU\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        int clubId = JsonPath.read(club, "$.id");
         // Enquanto a compra (Etapa 5) não existe, o vínculo com o clube é feito direto no banco.
-        jdbc.update("UPDATE jogadores SET clube_id = 1 WHERE id = ?", bia);
+        jdbc.update("UPDATE jogadores SET clube_id = ? WHERE id = ?", clubId, bia);
         mvc.perform(patch("/api/v1/players/" + caio + "/condition").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"condition\": \"DOENTE\"}")).andExpect(status().isOk());
 
@@ -114,8 +119,10 @@ class PlayerApiIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(jsonPath("$.data[*].id").value(contains(ana, caio)));
         mvc.perform(get("/api/v1/players").param("free", "false"))
                 .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
-        mvc.perform(get("/api/v1/players").param("club_id", "1"))
+        mvc.perform(get("/api/v1/players").param("club_id", String.valueOf(clubId)))
                 .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
+        mvc.perform(get("/api/v1/players").param("club_id", String.valueOf(clubId + 1)))
+                .andExpect(status().isNotFound());
         mvc.perform(get("/api/v1/players").param("min_age", "28").param("max_age", "29"))
                 .andExpect(jsonPath("$.data[*].id").value(contains(bia)));
         mvc.perform(get("/api/v1/players").param("min_age", "28").param("sort", "age_desc"))

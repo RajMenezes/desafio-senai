@@ -1,5 +1,7 @@
 package br.com.footballmarket.player.api;
 
+import br.com.footballmarket.FixedClockConfig;
+import br.com.footballmarket.player.application.ClubDirectory;
 import br.com.footballmarket.player.application.PlayerService;
 import br.com.footballmarket.player.domain.Condition;
 import br.com.footballmarket.player.domain.Player;
@@ -11,8 +13,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
@@ -22,8 +22,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.net.URI;
-import java.time.Clock;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * fica em {@code PlayerApiIntegrationTest}).
  */
 @WebMvcTest(PlayerController.class)
-@Import({PlayerService.class, JacksonConfig.class, PlayerControllerTest.FixedClock.class})
+@Import({PlayerService.class, JacksonConfig.class, FixedClockConfig.class})
 class PlayerControllerTest {
 
     private static final String MEIA_LUA_JSON = """
@@ -63,19 +61,14 @@ class PlayerControllerTest {
              "potential": 86, "base_value": 999, "overall": 1, "condition": "DOENTE", "club_id": 1}
             """;
 
-    @TestConfiguration
-    static class FixedClock {
-        @Bean
-        Clock clock() {
-            return Clock.fixed(NOW.toInstant(), ZoneOffset.ofHours(-3));
-        }
-    }
-
     @Autowired
     private MockMvc mvc;
 
     @MockitoBean
     private PlayerRepository repository;
+
+    @MockitoBean
+    private ClubDirectory clubs;
 
     private ResultActions send(MockHttpServletRequestBuilder request,
                                String body) throws Exception {
@@ -329,10 +322,21 @@ class PlayerControllerTest {
 
     @Test
     void freeFalseWithClubIsAccepted() throws Exception {
+        when(clubs.exists(1)).thenReturn(true);
         givenListed(withId(inClub(meiaLua(), 1), 2));
 
         mvc.perform(get("/api/v1/players").param("free", "false").param("club_id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].club_id").value(1));
+    }
+
+    @Test
+    void unknownClubFilterIsNotFound() throws Exception {
+        when(clubs.exists(7)).thenReturn(false);
+
+        mvc.perform(get("/api/v1/players").param("club_id", "7"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+        verify(repository, never()).findAll(any(Specification.class));
     }
 }

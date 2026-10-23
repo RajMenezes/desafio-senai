@@ -1,10 +1,10 @@
 package br.com.footballmarket.player.domain;
 
-import java.text.Collator;
+import br.com.footballmarket.shared.text.TextRules;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -58,11 +58,16 @@ public enum PlayerSort {
     }
 
     /**
-     * Ordem alfabética do português: "Álvaro" fica entre "Alan" e "Bruno", e não depois do "Z".
-     * O {@code Collator} do JDK é sincronizado, então a instância pode ser compartilhada.
+     * Ordem do elenco (RN11): posição, nome e id.
+     */
+    public static Comparator<Player> squadOrdering() {
+        return ordering(List.of(POSITION));
+    }
+
+    /**
+     * Ordem alfabética das Premissas ({@link TextRules#ALPHABETICAL}).
      */
     private static final class Names {
-        private static final Collator COLLATOR = Collator.getInstance(Locale.forLanguageTag("pt-BR"));
-        static final Comparator<Player> ORDER = Comparator.comparing(Player::getName, COLLATOR);
+        static final Comparator<Player> ORDER = Comparator.comparing(Player::getName, TextRules.ALPHABETICAL);
     }
 }

@@ -14,7 +14,7 @@ public final class
 TextNormalizer {
 
     private static final Pattern REPEATED_SPACES = Pattern.compile("\\s{2,}");
-    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+    private static final Pattern NONSPACING_MARKS = Pattern.compile("\\p{Mn}+");
 
     private TextNormalizer() {
     }
@@ -35,11 +35,12 @@ TextNormalizer {
     }
 
     /**
-     * Forma usada para comparar textos sem diferenciar maiúsculas, minúsculas e acentos (RN07):
+     * Forma usada para comparar textos sem diferenciar maiúsculas, minúsculas e acentos (V4 e RN07):
+     * minúsculas, depois decomposição NFD sem as marcas de acento (categoria Mn, que inclui a cedilha).
      * {@code "João"} e {@code "JOAO"} viram {@code "joao"}.
      */
     public static String fold(String text) {
-        String decomposed = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return COMBINING_MARKS.matcher(decomposed).replaceAll("").toLowerCase(Locale.ROOT);
+        String decomposed = Normalizer.normalize(text.toLowerCase(Locale.ROOT), Normalizer.Form.NFD);
+        return NONSPACING_MARKS.matcher(decomposed).replaceAll("");
     }
 }
